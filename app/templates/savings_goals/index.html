@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Savings Goals - FinSafe{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Savings Goals</h1>
+    <a href="{{ url_for('savings_goals.add') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Savings Goal
+    </a>
+</div>
+
+<div class="row">
+    {% for goal in goals %}
+    <div class="col-md-6 mb-4">
+        <div class="card {% if goal.is_completed %}border-success{% endif %}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="card-title">{{ goal.name }}</h5>
+                    {% if goal.is_completed %}
+                    <span class="badge bg-success">Completed!</span>
+                    {% endif %}
+                </div>
+                
+                {% if goal.target_date %}
+                <p class="text-muted mb-2">
+                    <i class="bi bi-calendar"></i> Target Date: {{ goal.target_date }}
+                </p>
+                {% endif %}
+                
+                <div class="mb-2">
+                    <strong>£{{ "%.2f"|format(goal.current_amount) }}</strong> / £{{ "%.2f"|format(goal.target_amount) }}
+                    <span class="text-muted">({{ "%.1f"|format(goal.progress) }}%)</span>
+                </div>
+                
+                <div class="progress mb-3" style="height: 25px;">
+                    <div class="progress-bar {% if goal.is_completed %}bg-success{% elif goal.progress >= 75 %}bg-info{% elif goal.progress >= 50 %}bg-primary{% else %}bg-warning{% endif %}" 
+                         role="progressbar" 
+                         style="width: {{ goal.progress }}%"
+                         aria-valuenow="{{ goal.progress }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                        {{ "%.1f"|format(goal.progress) }}%
+                    </div>
+                </div>
+                
+                <div class="mb-2">
+                    <small class="text-muted">Remaining: £{{ "%.2f"|format(goal.remaining) }}</small>
+                </div>
+                
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                            onclick="updateProgress({{ goal.id }}, {{ goal.current_amount }}, {{ goal.target_amount }})">
+                        <i class="bi bi-pencil"></i> Update Progress
+                    </button>
+                    <a href="{{ url_for('savings_goals.edit', id=goal.id) }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-gear"></i> Edit
+                    </a>
+                    <form method="POST" action="{{ url_for('savings_goals.delete', id=goal.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <p>No savings goals yet. <a href="{{ url_for('savings_goals.add') }}">Create your first savings goal</a></p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Update Progress Modal -->
+<div class="modal fade" id="updateProgressModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Progress</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="updateProgressForm">
+                    <input type="hidden" id="goalId" name="goal_id">
+                    <div class="mb-3">
+                        <label for="currentAmount" class="form-label">Current Amount</label>
+                        <input type="number" step="0.01" class="form-control" id="currentAmount" name="current_amount" required>
+                        <small class="form-text text-muted">Target: £<span id="targetAmount"></span></small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function updateProgress(goalId, currentAmount, targetAmount) {
+        document.getElementById('goalId').value = goalId;
+        document.getElementById('currentAmount').value = currentAmount;
+        document.getElementById('targetAmount').textContent = targetAmount.toFixed(2);
+        const modal = new bootstrap.Modal(document.getElementById('updateProgressModal'));
+        modal.show();
+    }
+    
+    document.getElementById('updateProgressForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const goalId = document.getElementById('goalId').value;
+        const currentAmount = parseFloat(document.getElementById('currentAmount').value);
+        
+        try {
+            const response = await fetch(`/savings-goals/update-progress/${goalId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ current_amount: currentAmount })
+            });
+            
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error updating progress');
+            }
+        } catch (error) {
+            alert('Error updating progress: ' + error);
+        }
+    });
+</script>
+{% endblock %}
+

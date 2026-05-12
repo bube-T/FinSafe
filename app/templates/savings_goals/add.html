@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Add Savings Goal - FinSafe{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Add Savings Goal</h1>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label for="name" class="form-label">Goal Name</label>
+                <input type="text" class="form-control" id="name" name="name" 
+                       placeholder="e.g., Emergency Fund, Vacation, House Down Payment" required>
+            </div>
+            <div class="mb-3">
+                <label for="target_amount" class="form-label">Target Amount</label>
+                <input type="number" step="0.01" class="form-control" id="target_amount" name="target_amount" required>
+            </div>
+            <div class="mb-3">
+                <label for="current_amount" class="form-label">Current Amount</label>
+                <input type="number" step="0.01" class="form-control" id="current_amount" name="current_amount" value="0" required>
+                <small class="form-text text-muted">How much have you saved so far?</small>
+            </div>
+            <div class="mb-3">
+                <label for="target_date" class="form-label">Target Date (Optional)</label>
+                <input type="date" class="form-control" id="target_date" name="target_date">
+                <small class="form-text text-muted">When do you want to reach this goal?</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Savings Goal</button>
+            <a href="{{ url_for('savings_goals.index') }}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

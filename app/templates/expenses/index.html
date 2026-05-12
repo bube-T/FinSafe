@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Expenses - FinSafe{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Expenses</h1>
+    <a href="{{ url_for('expenses.add') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Expense
+    </a>
+</div>
+
+<!-- Search and Filter Form -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('expenses.index') }}" id="filterForm">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search Description</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ search_query }}" placeholder="Search expenses...">
+                </div>
+                <div class="col-md-2">
+                    <label for="category" class="form-label">Category</label>
+                    <select class="form-select" id="category" name="category">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+                <div class="col-md-1">
+                    <label for="min_amount" class="form-label">Min Amount</label>
+                    <input type="number" step="0.01" class="form-control" id="min_amount" name="min_amount" 
+                           value="{{ min_amount if min_amount else '' }}" placeholder="£0.00">
+                </div>
+                <div class="col-md-1">
+                    <label for="max_amount" class="form-label">Max Amount</label>
+                    <input type="number" step="0.01" class="form-control" id="max_amount" name="max_amount" 
+                           value="{{ max_amount if max_amount else '' }}" placeholder="£0.00">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Filter
+                    </button>
+                </div>
+            </div>
+            {% if search_query or selected_category or start_date or end_date or min_amount or max_amount %}
+            <div class="mt-2">
+                <a href="{{ url_for('expenses.index') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Clear Filters
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses.items %}
+                    <tr>
+                        <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ expense.description }}</td>
+                        <td>{{ expense.category.name if expense.category else 'Uncategorized' }}</td>
+                        <td>£{{ "%.2f"|format(expense.amount) }}</td>
+                        <td>
+                            <a href="{{ url_for('expenses.edit', id=expense.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('expenses.delete', id=expense.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center">No expenses yet. <a href="{{ url_for('expenses.add') }}">Add your first expense</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if expenses.pages > 1 %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if expenses.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('expenses.index', page=expenses.prev_num, search=search_query, category=selected_category, start_date=start_date, end_date=end_date, min_amount=min_amount, max_amount=max_amount) }}">Previous</a>
+                </li>
+                {% endif %}
+                {% for page_num in expenses.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == expenses.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('expenses.index', page=page_num, search=search_query, category=selected_category, start_date=start_date, end_date=end_date, min_amount=min_amount, max_amount=max_amount) }}">{{ page_num }}</a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if expenses.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('expenses.index', page=expenses.next_num, search=search_query, category=selected_category, start_date=start_date, end_date=end_date, min_amount=min_amount, max_amount=max_amount) }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

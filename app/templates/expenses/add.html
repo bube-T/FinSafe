@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Add Expense - FinSafe{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Add Expense</h1>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount</label>
+                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <input type="text" class="form-control" id="description" name="description" required>
+            </div>
+            <div class="mb-3">
+                <label for="date" class="form-label">Date</label>
+                <input type="date" class="form-control" id="date" name="date" value="{{ today }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="category_id" class="form-label">Category (Optional)</label>
+                <select class="form-select" id="category_id" name="category_id">
+                    <option value="">Uncategorized</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Expense</button>
+            <a href="{{ url_for('expenses.index') }}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('date').valueAsDate = new Date();
+</script>
+{% endblock %}
+

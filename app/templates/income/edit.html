@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Income - FinSafe{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Edit Income</h1>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount</label>
+                <input type="number" step="0.01" class="form-control" id="amount" name="amount" value="{{ income.amount }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <input type="text" class="form-control" id="description" name="description" value="{{ income.description }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="date" class="form-label">Date</label>
+                <input type="date" class="form-control" id="date" name="date" value="{{ income.date.strftime('%Y-%m-%d') }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="source" class="form-label">Source (Optional)</label>
+                <input type="text" class="form-control" id="source" name="source" 
+                       value="{{ income.source or '' }}" placeholder="e.g., Salary, Freelance, Investment">
+            </div>
+            <button type="submit" class="btn btn-primary">Update Income</button>
+            <a href="{{ url_for('income.index') }}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
