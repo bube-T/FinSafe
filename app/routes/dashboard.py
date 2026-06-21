@@ -8,6 +8,26 @@ from collections import defaultdict
 
 bp = Blueprint('dashboard', __name__)
 
+@bp.route('/api/health')
+def health():
+    """Shows which database is connected and whether tables exist."""
+    import os
+    db_url = os.getenv('DATABASE_URL', 'not set')
+    db_type = 'postgresql' if 'postgresql' in db_url or 'postgres' in db_url else ('sqlite' if 'sqlite' in db_url else 'unknown')
+    try:
+        from app.models import User
+        user_count = User.query.count()
+        db_ok = True
+    except Exception as e:
+        user_count = None
+        db_ok = False
+    return jsonify({
+        'db_type': db_type,
+        'db_connected': db_ok,
+        'user_count': user_count,
+        'DATABASE_URL_set': db_url != 'not set',
+    })
+
 @bp.route('/')
 def root():
     """Root route - redirect to dashboard or login"""
