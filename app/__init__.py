@@ -19,8 +19,10 @@ def create_app():
     # Use SQLite for development, PostgreSQL for production
     database_url = os.getenv('DATABASE_URL')
     if not database_url:
-        # Default to SQLite for easy development setup
         database_url = 'sqlite:///finance_tracker.db'
+    # Railway provides postgres:// but SQLAlchemy requires postgresql://
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
