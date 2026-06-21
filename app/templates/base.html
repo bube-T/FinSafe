@@ -115,9 +115,8 @@
             ('income.index', 'payments', 'Income'),
             ('budgets.index', 'account_balance_wallet', 'Budgets'),
             ('savings_goals.index', 'savings', 'Goals'),
-            ('categories.index', 'category', 'Categories'),
-            ('import_csv.index', 'upload_file', 'Import CSV'),
             ('reports.index', 'bar_chart', 'Reports'),
+            ('settings.index', 'settings', 'Settings'),
         ] %}
         {% for endpoint, icon, label in nav_items %}
         <a href="{{ url_for(endpoint) }}" title="{{ label }}"
@@ -138,12 +137,66 @@
         <div class="flex justify-between items-center px-margin-mobile py-sm mx-auto">
             <h1 class="text-[20px] font-bold text-primary tracking-tight">FinSafe</h1>
             <div class="flex items-center gap-sm">
-                <button class="p-2 text-on-surface-variant hover:opacity-80 active:scale-95 transition-all" title="Notifications">
-                    <span class="material-symbols-outlined">notifications</span>
-                </button>
-                <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-on-primary text-[13px] font-bold">
-                    {{ current_user.username[0].upper() }}
+
+                <!-- Notification Bell -->
+                <div class="relative">
+                    <button id="notif-btn" class="p-2 text-on-surface-variant hover:opacity-80 active:scale-95 transition-all relative" title="Notifications">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span id="notif-badge" class="hidden absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full border-2 border-background"></span>
+                    </button>
+                    <!-- Notification panel -->
+                    <div id="notif-panel" class="hidden absolute right-0 top-full mt-1 w-80 bg-surface soft-card rounded-xl shadow-xl z-50 overflow-hidden">
+                        <div class="flex items-center justify-between px-md pt-md pb-sm border-b border-outline-variant/30">
+                            <h3 class="text-[15px] font-semibold text-primary">Notifications</h3>
+                            <span id="notif-count-label" class="text-[11px] font-semibold text-on-surface-variant"></span>
+                        </div>
+                        <div id="notif-list" class="max-h-72 overflow-y-auto">
+                            <div class="p-lg text-center text-[13px] text-on-surface-variant">Loading…</div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- User Avatar + Dropdown -->
+                <div class="relative">
+                    <button id="user-btn" class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-on-primary text-[13px] font-bold hover:opacity-90 active:scale-95 transition-all cursor-pointer" title="Account">
+                        {{ current_user.username[0].upper() }}
+                    </button>
+                    <!-- User dropdown -->
+                    <div id="user-menu" class="hidden absolute right-0 top-full mt-1 w-64 bg-surface soft-card rounded-xl shadow-xl z-50 overflow-hidden">
+                        <div class="px-md pt-md pb-sm border-b border-outline-variant/30">
+                            <div class="flex items-center gap-sm">
+                                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary text-[16px] font-bold flex-shrink-0">
+                                    {{ current_user.username[0].upper() }}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-[14px] font-semibold text-primary truncate">{{ current_user.username }}</p>
+                                    <p class="text-[12px] text-on-surface-variant truncate">{{ current_user.email }}</p>
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-on-surface-variant mt-sm">Member since {{ current_user.created_at.strftime('%B %Y') }}</p>
+                        </div>
+                        <div class="p-xs">
+                            <a href="{{ url_for('settings.index') }}" class="flex items-center gap-sm px-sm py-[10px] rounded-lg text-on-surface hover:bg-surface-container transition-colors">
+                                <span class="material-symbols-outlined text-[18px] text-on-surface-variant">manage_accounts</span>
+                                <span class="text-[14px]">Account Settings</span>
+                            </a>
+                            <a href="{{ url_for('categories.index') }}" class="flex items-center gap-sm px-sm py-[10px] rounded-lg text-on-surface hover:bg-surface-container transition-colors">
+                                <span class="material-symbols-outlined text-[18px] text-on-surface-variant">category</span>
+                                <span class="text-[14px]">Categories</span>
+                            </a>
+                            <a href="{{ url_for('import_csv.index') }}" class="flex items-center gap-sm px-sm py-[10px] rounded-lg text-on-surface hover:bg-surface-container transition-colors">
+                                <span class="material-symbols-outlined text-[18px] text-on-surface-variant">upload_file</span>
+                                <span class="text-[14px]">Import CSV</span>
+                            </a>
+                            <div class="my-xs border-t border-outline-variant/30"></div>
+                            <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-sm px-sm py-[10px] rounded-lg text-error hover:bg-error-container transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">logout</span>
+                                <span class="text-[14px] font-medium">Sign out</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </header>
@@ -229,10 +282,80 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
+        // Scroll shadow
         window.addEventListener('scroll', () => {
             const h = document.getElementById('main-header');
             if (h) h.classList.toggle('shadow-sm', window.scrollY > 10);
         });
+
+        // Dropdowns
+        const notifBtn   = document.getElementById('notif-btn');
+        const notifPanel = document.getElementById('notif-panel');
+        const userBtn    = document.getElementById('user-btn');
+        const userMenu   = document.getElementById('user-menu');
+
+        function closeAll() {
+            notifPanel?.classList.add('hidden');
+            userMenu?.classList.add('hidden');
+        }
+
+        notifBtn?.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const wasHidden = notifPanel.classList.contains('hidden');
+            closeAll();
+            if (wasHidden) {
+                notifPanel.classList.remove('hidden');
+                await loadNotifications();
+            }
+        });
+
+        userBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const wasHidden = userMenu.classList.contains('hidden');
+            closeAll();
+            if (wasHidden) userMenu.classList.remove('hidden');
+        });
+
+        document.addEventListener('click', closeAll);
+
+        async function loadNotifications() {
+            const list  = document.getElementById('notif-list');
+            const label = document.getElementById('notif-count-label');
+            try {
+                const data = await fetch('/api/notifications').then(r => r.json());
+                if (data.count === 0) {
+                    list.innerHTML = `<div class="p-lg text-center">
+                        <span class="material-symbols-outlined text-on-surface-variant" style="font-size:32px">notifications_none</span>
+                        <p class="text-[13px] text-on-surface-variant mt-sm">You're all caught up!</p>
+                    </div>`;
+                    label.textContent = '';
+                } else {
+                    label.textContent = data.count + ' alert' + (data.count !== 1 ? 's' : '');
+                    const colours = { error: 'text-error', warning: 'text-on-tertiary-container', success: 'text-secondary' };
+                    list.innerHTML = data.notifications.map(n => `
+                        <div class="flex items-start gap-sm px-md py-sm border-b border-outline-variant/20 last:border-0 hover:bg-surface-container-low transition-colors">
+                            <span class="material-symbols-outlined text-[18px] mt-0.5 flex-shrink-0 ${colours[n.severity] || 'text-on-surface-variant'}">${n.icon}</span>
+                            <div class="min-w-0">
+                                <p class="text-[13px] font-medium text-on-surface">${n.title}</p>
+                                <p class="text-[12px] text-on-surface-variant mt-0.5">${n.message}</p>
+                            </div>
+                        </div>`).join('');
+                }
+                const badge = document.getElementById('notif-badge');
+                if (badge) badge.classList.toggle('hidden', data.count === 0);
+            } catch {
+                list.innerHTML = '<div class="p-md text-center text-[13px] text-on-surface-variant">Could not load notifications.</div>';
+            }
+        }
+
+        // Badge count on every page load
+        (async () => {
+            try {
+                const d = await fetch('/api/notifications').then(r => r.json());
+                const b = document.getElementById('notif-badge');
+                if (b && d.count > 0) b.classList.remove('hidden');
+            } catch {}
+        })();
     </script>
     {% block extra_js %}{% endblock %}
 </body>

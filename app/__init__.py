@@ -43,7 +43,7 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
     
-    from app.routes import auth, expenses, categories, budgets, dashboard, import_csv, reports, income, savings_goals
+    from app.routes import auth, expenses, categories, budgets, dashboard, import_csv, reports, income, savings_goals, settings
     app.register_blueprint(auth.bp)
     app.register_blueprint(expenses.bp)
     app.register_blueprint(income.bp)
@@ -53,6 +53,7 @@ def create_app():
     app.register_blueprint(import_csv.bp)
     app.register_blueprint(reports.bp)
     app.register_blueprint(savings_goals.bp)
+    app.register_blueprint(settings.bp)
     
     from app.scheduler import init_scheduler
     init_scheduler(app)

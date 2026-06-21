@@ -218,6 +218,37 @@ def api_net_worth():
         'net_worth': round(net_worth, 2)
     })
 
+@bp.route('/api/notifications')
+@login_required
+def api_notifications():
+    """Return active budget alerts and completed savings goals as notifications."""
+    notifications = []
+
+    for b in Budget.query.filter_by(user_id=current_user.id).all():
+        pct = b.get_percentage_used()
+        if pct >= float(b.alert_threshold):
+            label = b.category.name if b.category else 'Overall'
+            over  = pct >= 100
+            notifications.append({
+                'type':     'budget_alert',
+                'icon':     'warning' if not over else 'error',
+                'title':    f'{"Over" if over else "Approaching"} budget: {label}',
+                'message':  f'{pct:.0f}% used — £{b.get_current_spending():.2f} of £{float(b.amount):.2f}',
+                'severity': 'error' if over else 'warning',
+            })
+
+    for g in SavingsGoal.query.filter_by(user_id=current_user.id).all():
+        if g.is_completed():
+            notifications.append({
+                'type':     'goal_complete',
+                'icon':     'check_circle',
+                'title':    f'Goal reached: {g.name}',
+                'message':  f'You hit your £{float(g.target_amount):.0f} target!',
+                'severity': 'success',
+            })
+
+    return jsonify({'count': len(notifications), 'notifications': notifications})
+
 @bp.route('/api/savings-goals-summary')
 @login_required
 def api_savings_goals_summary():
