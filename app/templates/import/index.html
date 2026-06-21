@@ -1,38 +1,65 @@
 {% extends "base.html" %}
-
 {% block title %}Import CSV - FinSafe{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Import Expenses from CSV</h1>
+<div class="max-w-lg mx-auto">
+    <div class="flex items-center gap-md mb-lg">
+        <a href="{{ url_for('expenses.index') }}" class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h1 class="text-[24px] font-bold text-primary">Import CSV</h1>
+    </div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="alert alert-info">
-            <h5><i class="bi bi-info-circle"></i> CSV Format Requirements</h5>
-            <p>Your CSV file should have the following columns:</p>
-            <ul>
-                <li><strong>date</strong> - Date in format YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY</li>
-                <li><strong>amount</strong> - Expense amount (can include £ and commas)</li>
-                <li><strong>description</strong> - Description of the expense</li>
-                <li><strong>category</strong> - (Optional) Category name - will be created if it doesn't exist</li>
-            </ul>
-            <p class="mb-0"><strong>Example:</strong></p>
-            <pre class="bg-light p-2 mt-2">date,amount,description,category
-2024-01-15,25.50,Grocery Store,Food
-2024-01-16,£50.00,Gas Station,Transportation</pre>
+    <!-- Info box -->
+    <div class="soft-card p-md rounded-xl mb-lg" style="background:#e5eeff">
+        <div class="flex items-start gap-sm mb-sm">
+            <span class="material-symbols-outlined text-primary">info</span>
+            <h3 class="text-[16px] font-semibold text-primary">CSV Format Requirements</h3>
         </div>
-        
-        <form method="POST" enctype="multipart/form-data">
-            <div class="mb-3">
-                <label for="file" class="form-label">Select CSV File</label>
-                <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+        <p class="text-[14px] text-on-surface-variant mb-sm">Your CSV file must have the following columns:</p>
+        <ul class="space-y-xs mb-md">
+            <li class="text-[13px] text-on-surface flex items-start gap-xs">
+                <span class="material-symbols-outlined text-secondary mt-0.5" style="font-size:14px">check</span>
+                <span><strong>date</strong> — YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY</span>
+            </li>
+            <li class="text-[13px] text-on-surface flex items-start gap-xs">
+                <span class="material-symbols-outlined text-secondary mt-0.5" style="font-size:14px">check</span>
+                <span><strong>amount</strong> — Numeric value (£ signs and commas are stripped)</span>
+            </li>
+            <li class="text-[13px] text-on-surface flex items-start gap-xs">
+                <span class="material-symbols-outlined text-secondary mt-0.5" style="font-size:14px">check</span>
+                <span><strong>description</strong> — Description of the expense</span>
+            </li>
+            <li class="text-[13px] text-on-surface flex items-start gap-xs">
+                <span class="material-symbols-outlined text-on-surface-variant mt-0.5" style="font-size:14px">remove</span>
+                <span><strong>category</strong> — (Optional) Category name, created if new</span>
+            </li>
+        </ul>
+        <p class="text-[12px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">Example:</p>
+        <pre class="text-[12px] bg-surface-container-lowest rounded-lg p-sm text-on-surface overflow-x-auto">date,amount,description,category
+2024-01-15,25.50,Grocery Store,Food
+2024-01-16,£50.00,Gas Station,Transport</pre>
+    </div>
+
+    <div class="soft-card p-lg rounded-xl">
+        <form method="POST" enctype="multipart/form-data" class="space-y-md">
+            <div>
+                <label for="file" class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Select CSV File</label>
+                <input type="file" id="file" name="file" accept=".csv" required
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
             </div>
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-upload"></i> Upload and Import
-            </button>
-            <a href="{{ url_for('expenses.index') }}" class="btn btn-secondary">Cancel</a>
+            <div class="flex gap-sm pt-sm">
+                <button type="submit"
+                        class="flex-1 py-md bg-primary text-on-primary text-[14px] font-semibold rounded-lg active:scale-95 transition-transform flex items-center justify-center gap-sm">
+                    <span class="material-symbols-outlined">upload</span>
+                    Upload &amp; Import
+                </button>
+                <a href="{{ url_for('expenses.index') }}"
+                   class="flex-1 py-md bg-surface-container text-on-surface text-[14px] font-medium rounded-lg hover:bg-surface-container-high transition-colors text-center">
+                    Cancel
+                </a>
+            </div>
         </form>
     </div>
 </div>
 {% endblock %}
-

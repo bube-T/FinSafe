@@ -1,142 +1,130 @@
 {% extends "base.html" %}
-
 {% block title %}Monthly Report - FinSafe{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Monthly Report - {{ month_name }} {{ year }}</h1>
+
+<!-- Header -->
+<div class="flex justify-between items-start mb-lg flex-wrap gap-sm">
     <div>
-        <a href="{{ url_for('reports.monthly_pdf', month=month, year=year) }}" class="btn btn-danger" target="_blank">
-            <i class="bi bi-file-pdf"></i> Export PDF
+        <p class="text-[12px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Monthly Report</p>
+        <h1 class="text-[28px] font-bold text-primary">{{ month_name }} {{ year }}</h1>
+    </div>
+    <div class="flex gap-sm flex-wrap">
+        <a href="{{ url_for('reports.monthly_pdf', month=month, year=year) }}" target="_blank"
+           class="px-md py-sm bg-error text-on-error text-[13px] font-semibold rounded-lg flex items-center gap-xs active:scale-95 transition-transform">
+            <span class="material-symbols-outlined" style="font-size:16px">picture_as_pdf</span>
+            Export PDF
         </a>
-        <a href="{{ url_for('reports.index') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Back to Reports
+        <a href="{{ url_for('reports.index') }}"
+           class="px-md py-sm bg-surface-container text-on-surface text-[13px] font-medium rounded-lg flex items-center gap-xs hover:bg-surface-container-high transition-colors">
+            <span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>
+            Back
         </a>
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Total Spending</h5>
-                <h3 class="text-primary">£{{ "%.2f"|format(total_spending) }}</h3>
-            </div>
-        </div>
+<!-- Summary cards -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-md mb-lg">
+    <div class="soft-card p-md rounded-xl text-center">
+        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Total Spent</p>
+        <p class="text-[24px] font-bold text-primary">£{{ "%.2f"|format(total_spending) }}</p>
     </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Average Daily</h5>
-                <h3 class="text-info">£{{ "%.2f"|format(avg_daily) }}</h3>
-            </div>
-        </div>
+    <div class="soft-card p-md rounded-xl text-center">
+        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Avg Daily</p>
+        <p class="text-[24px] font-bold text-on-surface">£{{ "%.2f"|format(avg_daily) }}</p>
     </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Total Expenses</h5>
-                <h3 class="text-success">{{ expenses|length }}</h3>
-            </div>
-        </div>
+    <div class="soft-card p-md rounded-xl text-center">
+        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Transactions</p>
+        <p class="text-[24px] font-bold text-secondary">{{ expenses|length }}</p>
     </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Days in Month</h5>
-                <h3 class="text-warning">{{ days_in_month }}</h3>
-            </div>
-        </div>
+    <div class="soft-card p-md rounded-xl text-center">
+        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Days in Month</p>
+        <p class="text-[24px] font-bold text-on-surface">{{ days_in_month }}</p>
     </div>
-</div>
+</section>
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Spending by Category</h5>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th>Amount</th>
-                                <th>Count</th>
-                                <th>% of Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for category, amount in category_totals.items()|sort(attribute='1', reverse=True) %}
-                            <tr>
-                                <td>{{ category }}</td>
-                                <td>£{{ "%.2f"|format(amount) }}</td>
-                                <td>{{ category_counts.get(category, 0) }}</td>
-                                <td>{{ "%.1f"|format((amount / total_spending * 100) if total_spending > 0 else 0) }}%</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+<!-- Category Breakdown + Budget Status -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-md mb-lg">
+    <!-- Category table -->
+    <div class="soft-card p-md rounded-xl">
+        <h3 class="text-[18px] font-semibold text-primary mb-md">Spending by Category</h3>
+        {% if category_totals %}
+        <div class="space-y-sm">
+            {% for category, amount in category_totals.items()|sort(attribute='1', reverse=True) %}
+            {% set pct = (amount / total_spending * 100) if total_spending > 0 else 0 %}
+            <div>
+                <div class="flex justify-between items-center mb-xs">
+                    <span class="text-[13px] font-medium text-on-surface">{{ category }}</span>
+                    <div class="text-right">
+                        <span class="text-[13px] font-semibold text-primary">£{{ "%.2f"|format(amount) }}</span>
+                        <span class="text-[11px] text-on-surface-variant ml-xs">({{ "%.1f"|format(pct) }}%)</span>
+                    </div>
+                </div>
+                <div class="h-1.5 bg-surface-container rounded-full overflow-hidden">
+                    <div class="h-full bg-primary rounded-full" style="width:{{ pct }}%"></div>
+                </div>
+                <p class="text-[11px] text-on-surface-variant mt-xs">{{ category_counts.get(category, 0) }} transactions</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-[14px] text-on-surface-variant">No expenses this month.</p>
+        {% endif %}
+    </div>
+
+    <!-- Budget Status -->
+    <div class="soft-card p-md rounded-xl">
+        <h3 class="text-[18px] font-semibold text-primary mb-md">Budget Status</h3>
+        {% if budgets %}
+        <div class="space-y-md">
+            {% for budget in budgets %}
+            {% set status = 'over' if budget.percentage >= 100 else ('warning' if budget.percentage >= 80 else 'safe') %}
+            <div>
+                <div class="flex justify-between items-center mb-xs">
+                    <span class="text-[13px] font-medium text-on-surface">{{ budget.category_name }}</span>
+                    <span class="text-[13px] {% if status == 'over' %}text-error{% elif status == 'warning' %}text-on-tertiary-container{% else %}text-secondary{% endif %}">
+                        £{{ "%.0f"|format(budget.spending) }} / £{{ "%.0f"|format(budget.amount) }}
+                    </span>
+                </div>
+                <div class="h-2 bg-surface-container rounded-full overflow-hidden">
+                    <div class="h-full rounded-full {% if status == 'over' %}bg-error{% elif status == 'warning' %}bg-on-tertiary-container{% else %}bg-secondary{% endif %}"
+                         style="width:{{ [budget.percentage, 100] | min }}%"></div>
+                </div>
+                <p class="text-[11px] text-on-surface-variant mt-xs">{{ "%.1f"|format(budget.percentage) }}% used</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-[14px] text-on-surface-variant">No budgets set. <a href="{{ url_for('budgets.add') }}" class="text-secondary hover:underline">Create a budget</a></p>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Expense table -->
+<div class="soft-card rounded-xl overflow-hidden">
+    <div class="px-md pt-md pb-sm">
+        <h3 class="text-[18px] font-semibold text-primary">All Expenses</h3>
+    </div>
+    <div class="divide-y divide-outline-variant/30">
+        {% for expense in expenses %}
+        <div class="flex items-center justify-between px-md py-sm hover:bg-surface-container-low transition-colors">
+            <div class="flex items-center gap-md">
+                <div class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-on-surface-variant">receipt</span>
+                </div>
+                <div>
+                    <p class="text-[14px] font-medium text-on-surface">{{ expense.description }}</p>
+                    <p class="text-[11px] text-on-surface-variant uppercase tracking-tight mt-0.5">
+                        {{ expense.category.name if expense.category else 'Uncategorized' }} &middot; {{ expense.date.strftime('%d %b') }}
+                    </p>
                 </div>
             </div>
+            <p class="text-[16px] font-semibold text-primary whitespace-nowrap ml-md">-£{{ "%.2f"|format(expense.amount) }}</p>
         </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Budget Status</h5>
-                {% if budgets %}
-                    {% for budget in budgets %}
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between">
-                            <strong>{{ budget.category_name }}</strong>
-                            <span>£{{ "%.2f"|format(budget.spending) }} / £{{ "%.2f"|format(budget.amount) }}</span>
-                        </div>
-                        <div class="progress" style="height: 20px;">
-                            <div class="progress-bar {% if budget.percentage >= 100 %}bg-danger{% elif budget.percentage >= 80 %}bg-warning{% else %}bg-success{% endif %}" 
-                                 style="width: {{ budget.percentage }}%">
-                                {{ "%.1f"|format(budget.percentage) }}%
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted">No budgets set for this month.</p>
-                {% endif %}
-            </div>
-        </div>
+        {% else %}
+        <div class="px-md py-lg text-center text-[14px] text-on-surface-variant">No expenses for this month.</div>
+        {% endfor %}
     </div>
 </div>
 
-<div class="card mt-4">
-    <div class="card-body">
-        <h5 class="card-title">All Expenses</h5>
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th>Category</th>
-                        <th>Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for expense in expenses %}
-                    <tr>
-                        <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
-                        <td>{{ expense.description }}</td>
-                        <td>{{ expense.category.name if expense.category else 'Uncategorized' }}</td>
-                        <td>£{{ "%.2f"|format(expense.amount) }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="4" class="text-center">No expenses for this month.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
 {% endblock %}
-

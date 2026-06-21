@@ -1,324 +1,315 @@
 {% extends "base.html" %}
-
 {% block title %}Dashboard - FinSafe{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Dashboard</h1>
 
-<div class="row mb-4">
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Total Income</h5>
-                <h3 class="text-success" id="total-income">£0.00</h3>
-                <small class="text-muted">This month</small>
-            </div>
+<!-- Bento Row 1: Summary Cards -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
+    <!-- Total Balance (dark) -->
+    <div class="soft-card p-md rounded-xl flex flex-col justify-between min-h-[160px] bg-primary text-on-primary" style="background:#000!important;color:#fff!important;border:none">
+        <div>
+            <p class="text-[11px] font-bold uppercase tracking-widest opacity-60">Total Balance</p>
+            <h2 class="text-[32px] font-bold mt-xs leading-tight" id="net-worth">£0.00</h2>
+        </div>
+        <div class="flex items-center gap-xs">
+            <span class="material-symbols-outlined text-[18px] text-secondary-fixed">trending_up</span>
+            <span class="text-[12px] font-medium opacity-70">Net worth (all time)</span>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Total Spending</h5>
-                <h3 class="text-primary" id="total-spending">£0.00</h3>
-                <small class="text-muted">This month</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Net Cash Flow</h5>
-                <h3 class="text-info" id="net-cash-flow">£0.00</h3>
-                <small class="text-muted">This month</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Expenses</h5>
-                <h3 class="text-warning" id="expense-count">0</h3>
-                <small class="text-muted">This month</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Avg Daily</h5>
-                <h3 class="text-secondary" id="avg-daily">£0.00</h3>
-                <small class="text-muted">This month</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Budget Alerts</h5>
-                <h3 class="text-danger" id="alert-count">0</h3>
-                <small class="text-muted">Active alerts</small>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Net Worth and Savings Goals Summary -->
-<div class="row mb-4" id="net-worth-container">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-calculator"></i> Net Worth</h5>
-                <h3 class="text-primary" id="net-worth">£0.00</h3>
-                <small class="text-muted">Total Income - Total Expenses + Savings</small>
+    <!-- Monthly Income -->
+    <div class="soft-card p-md rounded-xl flex flex-col justify-between min-h-[160px]">
+        <div>
+            <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Monthly Income</p>
+            <h2 class="text-[28px] font-bold text-secondary mt-xs leading-tight" id="total-income">£0.00</h2>
+        </div>
+        <div>
+            <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden mb-sm">
+                <div class="h-full bg-secondary rounded-full transition-all duration-1000" id="income-bar" style="width:0%"></div>
             </div>
+            <p class="text-[12px] text-on-surface-variant" id="income-subtitle">This month</p>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-bullseye"></i> Savings Goals</h5>
-                <h3 class="text-success" id="savings-progress">0%</h3>
-                <small class="text-muted" id="savings-details">£0.00 / £0.00</small>
+
+    <!-- Monthly Spending -->
+    <div class="soft-card p-md rounded-xl flex flex-col justify-between min-h-[160px]">
+        <div>
+            <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Monthly Spending</p>
+            <h2 class="text-[28px] font-bold text-on-surface mt-xs leading-tight" id="total-spending">£0.00</h2>
+        </div>
+        <div>
+            <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden mb-sm">
+                <div class="h-full bg-on-surface rounded-full transition-all duration-1000" id="spending-bar" style="width:0%"></div>
             </div>
+            <p class="text-[12px] text-on-surface-variant" id="spending-subtitle">of income</p>
         </div>
     </div>
-</div>
+</section>
 
-<div id="budget-alerts-container"></div>
+<!-- Row 2: At a Glance + Trends | Category Breakdown -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-md mb-lg">
 
-<div class="row mt-4" id="spending-vs-budget-container">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Spending vs Budget (This Month)</h5>
-                <div id="budget-comparison">
-                    <p class="text-muted text-center">Loading...</p>
+    <!-- Left column: At a Glance + Trends -->
+    <div class="md:col-span-4 flex flex-col gap-md">
+        <!-- At a Glance -->
+        <div class="soft-card p-md rounded-xl">
+            <div class="flex justify-between items-center mb-md">
+                <h3 class="text-[18px] font-semibold text-primary">At a Glance</h3>
+                <span class="text-[12px] text-on-surface-variant">This month</span>
+            </div>
+            <div class="space-y-md">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-sm">
+                        <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+                            <span class="material-symbols-outlined text-secondary">payments</span>
+                        </div>
+                        <div>
+                            <p class="text-[12px] text-on-surface-variant">Net Cash Flow</p>
+                            <p class="text-[14px] font-bold text-on-surface" id="net-cash-flow">£0.00</p>
+                        </div>
+                    </div>
+                    <span class="material-symbols-outlined text-secondary" id="cashflow-icon">arrow_upward</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-sm">
+                        <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+                            <span class="material-symbols-outlined text-on-surface-variant">calendar_today</span>
+                        </div>
+                        <div>
+                            <p class="text-[12px] text-on-surface-variant">Avg Daily Spend</p>
+                            <p class="text-[14px] font-bold text-on-surface" id="avg-daily">£0.00</p>
+                        </div>
+                    </div>
+                    <span class="text-[12px] text-on-surface-variant bg-surface-container px-sm py-xs rounded-full" id="expense-count-badge">0 expenses</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-sm">
+                        <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+                            <span class="material-symbols-outlined text-on-surface-variant">savings</span>
+                        </div>
+                        <div>
+                            <p class="text-[12px] text-on-surface-variant">Savings Goals</p>
+                            <p class="text-[14px] font-bold text-secondary" id="savings-progress">—</p>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('savings_goals.index') }}" class="text-[12px] text-secondary hover:underline">View →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6-Month Trends -->
+        <div class="soft-card p-md rounded-xl flex-grow">
+            <h3 class="text-[18px] font-semibold text-primary mb-md">6 Month Trends</h3>
+            <canvas id="trendsChart" height="180"></canvas>
+        </div>
+    </div>
+
+    <!-- Right column: Category Breakdown -->
+    <div class="md:col-span-8">
+        <div class="soft-card p-md rounded-xl h-full">
+            <div class="flex justify-between items-center mb-lg">
+                <h3 class="text-[18px] font-semibold text-primary">Spending by Category</h3>
+                <span class="text-[12px] text-on-surface-variant">This month</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 items-center gap-lg">
+                <div class="flex justify-center">
+                    <div class="relative w-44 h-44">
+                        <canvas id="categoryChart"></canvas>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Total</p>
+                            <p class="text-[20px] font-semibold text-on-surface" id="cat-total">£0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-sm" id="category-legend">
+                    <p class="text-[14px] text-on-surface-variant text-center">Loading...</p>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Spending Trends (Last 6 Months)</h5>
-                <canvas id="trendsChart"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Category Breakdown</h5>
-                <canvas id="categoryChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Budget Alerts -->
+<div id="budget-alerts-container" class="mb-lg"></div>
 
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Recent Expenses</h5>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Category</th>
-                                <th>Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recent-expenses">
-                            <tr>
-                                <td colspan="4" class="text-center">Loading...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+<!-- Recent Transactions -->
+<section class="soft-card p-md rounded-xl">
+    <div class="flex justify-between items-center mb-md">
+        <h3 class="text-[18px] font-semibold text-primary">Recent Transactions</h3>
+        <a href="{{ url_for('expenses.index') }}"
+           class="bg-surface-container px-md py-xs rounded-full text-[13px] font-medium text-on-surface hover:bg-surface-container-high transition-colors">
+            View All
+        </a>
     </div>
-</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-xl" id="recent-expenses">
+        <div class="col-span-2 text-center py-lg text-on-surface-variant text-[14px]">Loading...</div>
+    </div>
+</section>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    const PALETTE = ['#006c49','#000000','#ffb95f','#cbdbf5','#4edea3','#ba1a1a','#45464d','#6cf8bb'];
     let trendsChart, categoryChart;
 
-    async function loadDashboardData() {
-        // Load monthly summary
-        const summaryRes = await fetch('/api/monthly-summary');
-        const summary = await summaryRes.json();
-        
+    async function loadDashboard() {
+        const [summaryRes, trendsRes, catRes, recentRes, nwRes, savingsRes] = await Promise.all([
+            fetch('/api/monthly-summary'),
+            fetch('/api/spending-trends'),
+            fetch('/api/category-breakdown'),
+            fetch('/api/recent-expenses'),
+            fetch('/api/net-worth'),
+            fetch('/api/savings-goals-summary'),
+        ]);
+
+        const summary  = await summaryRes.json();
+        const trends   = await trendsRes.json();
+        const cats     = await catRes.json();
+        const recent   = await recentRes.json();
+        const nw       = await nwRes.json();
+        const savings  = await savingsRes.json();
+
+        /* --- Balance card --- */
+        document.getElementById('net-worth').textContent = '£' + nw.net_worth.toFixed(2);
+
+        /* --- Income card --- */
         document.getElementById('total-income').textContent = '£' + (summary.total_income || 0).toFixed(2);
+        document.getElementById('income-subtitle').textContent = `£${summary.avg_daily.toFixed(2)} avg/day`;
+        setTimeout(() => { document.getElementById('income-bar').style.width = '80%'; }, 400);
+
+        /* --- Spending card --- */
         document.getElementById('total-spending').textContent = '£' + summary.total_spending.toFixed(2);
-        document.getElementById('net-cash-flow').textContent = '£' + (summary.net_cash_flow || 0).toFixed(2);
-        document.getElementById('expense-count').textContent = summary.expense_count;
+        const spPct = summary.total_income > 0
+            ? Math.min((summary.total_spending / summary.total_income) * 100, 100).toFixed(0)
+            : 0;
+        setTimeout(() => { document.getElementById('spending-bar').style.width = spPct + '%'; }, 400);
+        document.getElementById('spending-subtitle').textContent = spPct + '% of income spent';
+
+        /* --- At a Glance --- */
+        const ncf = summary.net_cash_flow || 0;
+        const ncfEl = document.getElementById('net-cash-flow');
+        ncfEl.textContent = (ncf >= 0 ? '+' : '') + '£' + Math.abs(ncf).toFixed(2);
+        ncfEl.style.color = ncf >= 0 ? '#006c49' : '#ba1a1a';
+        const icon = document.getElementById('cashflow-icon');
+        icon.textContent = ncf >= 0 ? 'arrow_upward' : 'arrow_downward';
+        icon.style.color  = ncf >= 0 ? '#006c49' : '#ba1a1a';
         document.getElementById('avg-daily').textContent = '£' + summary.avg_daily.toFixed(2);
-        document.getElementById('alert-count').textContent = summary.budget_alerts.length;
-        
-        // Update net cash flow color
-        const netCashFlowEl = document.getElementById('net-cash-flow');
-        if (summary.net_cash_flow >= 0) {
-            netCashFlowEl.className = 'text-success';
+        document.getElementById('expense-count-badge').textContent = `${summary.expense_count} expenses`;
+
+        if (savings.total_goals > 0) {
+            document.getElementById('savings-progress').textContent =
+                `${savings.total_progress.toFixed(0)}% (${savings.completed_goals}/${savings.total_goals} done)`;
         } else {
-            netCashFlowEl.className = 'text-danger';
+            document.getElementById('savings-progress').textContent = 'No goals yet';
         }
 
-        // Display budget alerts
-        const alertsContainer = document.getElementById('budget-alerts-container');
-        if (summary.budget_alerts.length > 0) {
-            alertsContainer.innerHTML = '<div class="alert alert-warning"><h5><i class="bi bi-exclamation-triangle"></i> Budget Alerts</h5><ul class="mb-0">' +
-                summary.budget_alerts.map(alert => 
-                    `<li>${alert.category_name}: ${alert.percentage.toFixed(1)}% used (£${alert.spending.toFixed(2)} / £${alert.amount.toFixed(2)})</li>`
-                ).join('') + '</ul></div>';
-        } else {
-            alertsContainer.innerHTML = '';
-        }
-
-        // Display spending vs budget by category
-        const budgetComparison = document.getElementById('budget-comparison');
-        if (summary.category_budgets && summary.category_budgets.length > 0) {
-            budgetComparison.innerHTML = summary.category_budgets.map(cat => {
-                const percentage = cat.percentage;
-                const statusClass = percentage >= 100 ? 'danger' : percentage >= 80 ? 'warning' : 'success';
-                return `
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <div>
-                                <span class="badge" style="background-color: ${cat.category_color}">${cat.category_name}</span>
-                            </div>
-                            <div class="text-end">
-                                <strong>£${cat.spending.toFixed(2)}</strong> / £${cat.budget_amount.toFixed(2)}
-                                <span class="text-muted">(${percentage.toFixed(1)}%)</span>
-                            </div>
-                        </div>
-                        <div class="progress" style="height: 25px;">
-                            <div class="progress-bar bg-${statusClass}" 
-                                 role="progressbar" 
-                                 style="width: ${Math.min(percentage, 100)}%"
-                                 aria-valuenow="${percentage}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="100">
-                                ${percentage.toFixed(1)}%
-                            </div>
-                        </div>
-                        <small class="text-muted">
-                            Remaining: £${cat.remaining.toFixed(2)}
-                        </small>
+        /* --- Budget Alerts --- */
+        const alertBox = document.getElementById('budget-alerts-container');
+        if (summary.budget_alerts && summary.budget_alerts.length > 0) {
+            alertBox.innerHTML = `
+                <div class="soft-card p-md rounded-xl mb-lg" style="background:#ffdad6;border-color:#ffb4ab">
+                    <div class="flex items-center gap-sm mb-sm">
+                        <span class="material-symbols-outlined" style="color:#93000a">warning</span>
+                        <h4 class="text-[18px] font-semibold" style="color:#93000a">Budget Alerts</h4>
                     </div>
-                `;
-            }).join('');
+                    <ul class="space-y-xs">
+                        ${summary.budget_alerts.map(a => `
+                            <li class="text-[14px]" style="color:#410002">
+                                <strong>${a.category_name}</strong>: ${a.percentage.toFixed(1)}% used
+                                (£${a.spending.toFixed(2)} / £${a.amount.toFixed(2)})
+                            </li>`).join('')}
+                    </ul>
+                </div>`;
         } else {
-            budgetComparison.innerHTML = '<p class="text-muted text-center">No budgets set yet. <a href="/budgets/add">Create a budget</a> to track spending.</p>';
+            alertBox.innerHTML = '';
         }
 
-        // Load spending trends
-        const trendsRes = await fetch('/api/spending-trends');
-        const trends = await trendsRes.json();
-        
+        /* --- Trends Chart --- */
         if (trendsChart) trendsChart.destroy();
-        const trendsCtx = document.getElementById('trendsChart').getContext('2d');
-        trendsChart = new Chart(trendsCtx, {
+        trendsChart = new Chart(document.getElementById('trendsChart'), {
             type: 'line',
             data: {
                 labels: trends.labels,
                 datasets: [{
                     label: 'Spending',
                     data: trends.data,
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    tension: 0.1
+                    borderColor: '#006c49',
+                    backgroundColor: 'rgba(0,108,73,0.08)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#006c49',
+                    pointRadius: 4,
                 }]
             },
             options: {
                 responsive: true,
+                plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+                    y: { beginAtZero: true, grid: { color: '#e5eeff' }, ticks: { color: '#45464d', font: { size: 11 } } },
+                    x: { grid: { display: false }, ticks: { color: '#45464d', font: { size: 11 } } }
                 }
             }
         });
 
-        // Load category breakdown
-        const categoryRes = await fetch('/api/category-breakdown');
-        const categoryData = await categoryRes.json();
-        
+        /* --- Category Doughnut --- */
         if (categoryChart) categoryChart.destroy();
-        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-        categoryChart = new Chart(categoryCtx, {
+        const total = cats.data.reduce((a, b) => a + b, 0);
+        document.getElementById('cat-total').textContent = '£' + total.toFixed(0);
+
+        categoryChart = new Chart(document.getElementById('categoryChart'), {
             type: 'doughnut',
             data: {
-                labels: categoryData.labels,
-                datasets: [{
-                    data: categoryData.data,
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(255, 206, 86, 0.8)',
-                        'rgba(75, 192, 192, 0.8)',
-                        'rgba(153, 102, 255, 0.8)',
-                        'rgba(255, 159, 64, 0.8)'
-                    ]
-                }]
+                labels: cats.labels,
+                datasets: [{ data: cats.data, backgroundColor: PALETTE.slice(0, cats.data.length), borderWidth: 0, hoverOffset: 4 }]
             },
-            options: {
-                responsive: true
-            }
+            options: { responsive: true, cutout: '72%', plugins: { legend: { display: false } } }
         });
 
-        // Load recent expenses
-        const recentRes = await fetch('/api/recent-expenses');
-        const recent = await recentRes.json();
-        
-        const tbody = document.getElementById('recent-expenses');
-        if (recent.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center">No expenses yet</td></tr>';
+        const legend = document.getElementById('category-legend');
+        if (!cats.labels.length) {
+            legend.innerHTML = '<p class="text-[14px] text-center" style="color:#45464d">No expenses this month</p>';
         } else {
-            tbody.innerHTML = recent.map(exp => 
-                `<tr>
-                    <td>${new Date(exp.date).toLocaleDateString()}</td>
-                    <td>${exp.description}</td>
-                    <td>${exp.category_name}</td>
-                    <td>£${exp.amount.toFixed(2)}</td>
-                </tr>`
-            ).join('');
+            legend.innerHTML = cats.labels.map((label, i) => {
+                const pct = total > 0 ? ((cats.data[i] / total) * 100).toFixed(0) : 0;
+                return `<div class="flex items-center justify-between">
+                    <div class="flex items-center gap-sm">
+                        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${PALETTE[i % PALETTE.length]}"></span>
+                        <span class="text-[13px]" style="color:#45464d">${label}</span>
+                    </div>
+                    <span class="text-[13px] font-medium" style="color:#0b1c30">£${cats.data[i].toFixed(0)} (${pct}%)</span>
+                </div>`;
+            }).join('');
+        }
+
+        /* --- Recent Transactions --- */
+        const grid = document.getElementById('recent-expenses');
+        if (!recent.length) {
+            grid.innerHTML = `<div class="col-span-2 text-center py-lg text-[14px]" style="color:#45464d">
+                No expenses yet.
+                <a href="{{ url_for('expenses.add') }}" style="color:#006c49;text-decoration:underline">Add your first expense</a>
+            </div>`;
+        } else {
+            grid.innerHTML = recent.map(exp => {
+                const d = new Date(exp.date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                return `<div class="flex items-center justify-between py-sm border-b" style="border-color:rgba(198,198,205,0.3)">
+                    <div class="flex items-center gap-md">
+                        <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#e5eeff">
+                            <span class="material-symbols-outlined" style="color:#45464d">receipt</span>
+                        </div>
+                        <div>
+                            <p class="text-[14px] font-medium" style="color:#0b1c30">${exp.description}</p>
+                            <p class="text-[11px] uppercase tracking-tight mt-0.5" style="color:#45464d">${exp.category_name} · ${d}</p>
+                        </div>
+                    </div>
+                    <p class="text-[18px] font-semibold whitespace-nowrap ml-md" style="color:#000">-£${exp.amount.toFixed(2)}</p>
+                </div>`;
+            }).join('');
         }
     }
 
-    async function loadNetWorth() {
-        const res = await fetch('/api/net-worth');
-        const data = await res.json();
-        document.getElementById('net-worth').textContent = '£' + data.net_worth.toFixed(2);
-    }
-    
-    async function loadSavingsGoals() {
-        const res = await fetch('/api/savings-goals-summary');
-        const data = await res.json();
-        if (data.total_goals > 0) {
-            document.getElementById('savings-progress').textContent = data.total_progress.toFixed(1) + '%';
-            document.getElementById('savings-details').textContent = 
-                `£${data.total_current.toFixed(2)} / £${data.total_target.toFixed(2)} (${data.completed_goals}/${data.total_goals} completed)`;
-        } else {
-            document.getElementById('savings-progress').textContent = 'No goals';
-            document.getElementById('savings-details').textContent = 'Create a savings goal to track progress';
-        }
-    }
-
-    loadDashboardData();
-    loadNetWorth();
-    loadSavingsGoals();
-    setInterval(() => {
-        loadDashboardData();
-        loadNetWorth();
-        loadSavingsGoals();
-    }, 60000); // Refresh every minute
+    loadDashboard();
+    setInterval(loadDashboard, 60000);
 </script>
 {% endblock %}
-

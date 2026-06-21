@@ -1,129 +1,137 @@
 {% extends "base.html" %}
-
 {% block title %}Income - FinSafe{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Income</h1>
-    <a href="{{ url_for('income.add') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Add Income
+
+<div class="flex justify-between items-center mb-lg">
+    <div>
+        <h1 class="text-[24px] font-bold text-primary">Income</h1>
+        <p class="text-[14px] text-on-surface-variant mt-xs">Track your earnings</p>
+    </div>
+    <a href="{{ url_for('income.add') }}"
+       class="px-lg py-md bg-secondary text-on-secondary text-[14px] font-semibold rounded-lg flex items-center gap-sm active:scale-95 transition-transform shadow-sm">
+        <span class="material-symbols-outlined">add</span>
+        Add Income
     </a>
 </div>
 
-<!-- Search and Filter Form -->
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="GET" action="{{ url_for('income.index') }}" id="filterForm">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label for="search" class="form-label">Search Description</label>
-                    <input type="text" class="form-control" id="search" name="search" 
-                           value="{{ search_query }}" placeholder="Search income...">
-                </div>
-                <div class="col-md-2">
-                    <label for="source" class="form-label">Source</label>
-                    <input type="text" class="form-control" id="source" name="source" 
-                           value="{{ selected_source }}" placeholder="e.g., Salary">
-                </div>
-                <div class="col-md-2">
-                    <label for="start_date" class="form-label">Start Date</label>
-                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
-                </div>
-                <div class="col-md-2">
-                    <label for="end_date" class="form-label">End Date</label>
-                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
-                </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-search"></i> Filter
-                    </button>
-                </div>
+<!-- Filter Panel -->
+<div class="soft-card p-md rounded-xl mb-lg">
+    <form method="GET" action="{{ url_for('income.index') }}">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-md mb-md">
+            <div>
+                <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Search</label>
+                <input type="text" name="search" value="{{ search_query }}" placeholder="Search..."
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
             </div>
+            <div>
+                <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Source</label>
+                <input type="text" name="source" value="{{ selected_source }}" placeholder="e.g. Salary"
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">From</label>
+                <input type="date" name="start_date" value="{{ start_date }}"
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">To</label>
+                <input type="date" name="end_date" value="{{ end_date }}"
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+        </div>
+        <div class="flex gap-sm">
+            <button type="submit"
+                    class="px-lg py-sm bg-secondary text-on-secondary text-[14px] font-semibold rounded-lg active:scale-95 transition-transform flex items-center gap-xs">
+                <span class="material-symbols-outlined" style="font-size:16px">search</span>
+                Filter
+            </button>
             {% if search_query or selected_source or start_date or end_date %}
-            <div class="mt-2">
-                <a href="{{ url_for('income.index') }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-x-circle"></i> Clear Filters
-                </a>
-            </div>
+            <a href="{{ url_for('income.index') }}"
+               class="px-lg py-sm bg-surface-container text-on-surface text-[14px] font-medium rounded-lg hover:bg-surface-container-high transition-colors flex items-center gap-xs">
+                <span class="material-symbols-outlined" style="font-size:16px">close</span>
+                Clear
+            </a>
             {% endif %}
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th>Source</th>
-                        <th>Amount</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for income in incomes.items %}
-                    <tr>
-                        <td>{{ income.date.strftime('%Y-%m-%d') }}</td>
-                        <td>{{ income.description }}</td>
-                        <td>{{ income.source or 'N/A' }}</td>
-                        <td>£{{ "%.2f"|format(income.amount) }}</td>
-                        <td>
-                            <a href="{{ url_for('income.edit', id=income.id) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <form method="POST" action="{{ url_for('income.delete', id=income.id) }}" style="display: inline;">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="text-center">No income records yet. <a href="{{ url_for('income.add') }}">Add your first income</a></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<!-- Income List -->
+<div class="soft-card rounded-xl overflow-hidden">
+    {% if incomes.items %}
+    <div class="divide-y divide-outline-variant/30">
+        {% for income in incomes.items %}
+        <div class="flex items-center justify-between px-md py-sm hover:bg-surface-container-low transition-colors">
+            <div class="flex items-center gap-md">
+                <div class="w-11 h-11 rounded-xl bg-secondary-container flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-on-secondary-container">payments</span>
+                </div>
+                <div>
+                    <p class="text-[14px] font-medium text-on-surface">{{ income.description }}</p>
+                    <p class="text-[11px] text-on-surface-variant uppercase tracking-tight mt-0.5">
+                        {{ income.source or 'Income' }} &middot; {{ income.date.strftime('%d %b %Y') }}
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-sm ml-md">
+                <p class="text-[18px] font-semibold text-secondary whitespace-nowrap">+£{{ "%.2f"|format(income.amount) }}</p>
+                <a href="{{ url_for('income.edit', id=income.id) }}"
+                   class="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors">
+                    <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+                </a>
+                <form method="POST" action="{{ url_for('income.delete', id=income.id) }}" class="inline"
+                      onsubmit="return confirm('Delete this income record?')">
+                    <button type="submit"
+                            class="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container transition-colors">
+                        <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+                    </button>
+                </form>
+            </div>
         </div>
-        
-        {% if incomes.pages > 1 %}
-        <nav>
-            <ul class="pagination justify-content-center">
-                {% if incomes.has_prev %}
-                <li class="page-item">
-                    <a class="page-link" href="{{ url_for('income.index', page=incomes.prev_num, search=search_query, start_date=start_date, end_date=end_date, source=selected_source) }}">Previous</a>
-                </li>
-                {% endif %}
-                {% for page_num in incomes.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                    {% if page_num %}
-                        {% if page_num == incomes.page %}
-                        <li class="page-item active">
-                            <span class="page-link">{{ page_num }}</span>
-                        </li>
-                        {% else %}
-                        <li class="page-item">
-                            <a class="page-link" href="{{ url_for('income.index', page=page_num, search=search_query, start_date=start_date, end_date=end_date, source=selected_source) }}">{{ page_num }}</a>
-                        </li>
-                        {% endif %}
-                    {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link">…</span>
-                        </li>
-                    {% endif %}
-                {% endfor %}
-                {% if incomes.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="{{ url_for('income.index', page=incomes.next_num, search=search_query, start_date=start_date, end_date=end_date, source=selected_source) }}">Next</a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
+        {% endfor %}
+    </div>
+
+    {% if incomes.pages > 1 %}
+    <div class="flex justify-center items-center gap-sm p-md border-t border-outline-variant/30">
+        {% if incomes.has_prev %}
+        <a href="{{ url_for('income.index', page=incomes.prev_num, search=search_query, source=selected_source, start_date=start_date, end_date=end_date) }}"
+           class="px-md py-sm rounded-lg bg-surface-container text-on-surface text-[13px] font-medium hover:bg-surface-container-high transition-colors flex items-center gap-xs">
+            <span class="material-symbols-outlined" style="font-size:16px">chevron_left</span> Prev
+        </a>
+        {% endif %}
+        {% for page_num in incomes.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+            <a href="{{ url_for('income.index', page=page_num, search=search_query, source=selected_source, start_date=start_date, end_date=end_date) }}"
+               class="w-9 h-9 rounded-lg text-[13px] font-semibold flex items-center justify-center transition-colors {% if page_num == incomes.page %}bg-secondary text-on-secondary{% else %}bg-surface-container text-on-surface hover:bg-surface-container-high{% endif %}">
+                {{ page_num }}
+            </a>
+            {% else %}
+            <span class="text-on-surface-variant px-xs">…</span>
+            {% endif %}
+        {% endfor %}
+        {% if incomes.has_next %}
+        <a href="{{ url_for('income.index', page=incomes.next_num, search=search_query, source=selected_source, start_date=start_date, end_date=end_date) }}"
+           class="px-md py-sm rounded-lg bg-surface-container text-on-surface text-[13px] font-medium hover:bg-surface-container-high transition-colors flex items-center gap-xs">
+            Next <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span>
+        </a>
         {% endif %}
     </div>
-</div>
-{% endblock %}
+    {% endif %}
 
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-xl px-md text-center">
+        <span class="material-symbols-outlined text-on-surface-variant mb-md" style="font-size:48px">payments</span>
+        <p class="text-[20px] font-semibold text-primary mb-xs">No income records found</p>
+        <p class="text-[14px] text-on-surface-variant mb-lg">
+            {% if search_query or selected_source %}Try adjusting your filters{% else %}Start by logging your income{% endif %}
+        </p>
+        <a href="{{ url_for('income.add') }}"
+           class="px-lg py-md bg-secondary text-on-secondary text-[14px] font-semibold rounded-lg active:scale-95 transition-transform">
+            Add Income
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

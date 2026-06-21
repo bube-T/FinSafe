@@ -1,66 +1,155 @@
 {% extends "base.html" %}
-
 {% block title %}Budgets - FinSafe{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Budgets</h1>
-    <a href="{{ url_for('budgets.add') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Add Budget
-    </a>
-</div>
 
-<div class="row">
-    {% for budget in budgets %}
-    <div class="col-md-6 mb-3">
-        <div class="card {% if budget.alert_reached %}border-danger{% endif %}">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h5 class="card-title">{{ budget.category_name }}</h5>
-                    {% if budget.alert_reached %}
-                    <span class="alert-badge">Alert!</span>
-                    {% endif %}
-                </div>
-                <p class="text-muted mb-2">{{ budget.period|title }} Budget</p>
-                <div class="mb-2">
-                    <strong>£{{ "%.2f"|format(budget.spending) }}</strong> / £{{ "%.2f"|format(budget.amount) }}
-                    <span class="text-muted">({{ "%.1f"|format(budget.percentage) }}%)</span>
-                </div>
-                <div class="progress mb-3" style="height: 20px;">
-                    <div class="progress-bar {% if budget.percentage >= 100 %}bg-danger{% elif budget.percentage >= budget.alert_threshold %}bg-warning{% else %}bg-success{% endif %}" 
-                         role="progressbar" 
-                         style="width: {{ budget.percentage }}%"
-                         aria-valuenow="{{ budget.percentage }}" 
-                         aria-valuemin="0" 
-                         aria-valuemax="100">
-                        {{ "%.1f"|format(budget.percentage) }}%
+{% set total_amount   = budgets | sum(attribute='amount') %}
+{% set total_spending = budgets | sum(attribute='spending') %}
+{% set total_remaining = total_amount - total_spending %}
+{% set total_pct = ((total_spending / total_amount * 100) | round(1)) if total_amount > 0 else 0 %}
+
+<!-- Monthly Overview Banner -->
+<section class="mb-lg">
+    <div class="soft-card p-lg rounded-xl flex flex-col md:flex-row gap-lg items-start md:items-center relative overflow-hidden">
+        <div class="absolute top-0 right-0 p-lg opacity-5 pointer-events-none select-none">
+            <span class="material-symbols-outlined" style="font-size:120px">account_balance_wallet</span>
+        </div>
+        <div class="flex-1 w-full">
+            <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Monthly Overview</p>
+            <h1 class="text-[28px] font-bold text-primary mb-md">Budget Summary</h1>
+            <div class="flex items-end gap-xs mb-sm">
+                <span class="text-[24px] font-semibold text-primary">£{{ "%.2f"|format(total_spending) }}</span>
+                <span class="text-[14px] text-on-surface-variant pb-1">spent of £{{ "%.2f"|format(total_amount) }}</span>
+            </div>
+            <div class="h-2 bg-surface-container rounded-full overflow-hidden mb-md w-full max-w-sm">
+                <div class="h-full rounded-full transition-all duration-700
+                    {% if total_pct >= 100 %}bg-error{% elif total_pct >= 75 %}bg-on-tertiary-container{% else %}bg-secondary{% endif %}"
+                    style="width:{{ [total_pct, 100] | min }}%"></div>
+            </div>
+            <p class="text-[14px] text-on-surface-variant">
+                You have
+                <span class="font-bold {% if total_remaining >= 0 %}text-secondary{% else %}text-error{% endif %}">
+                    £{{ "%.2f"|format(total_remaining | abs) }}
+                </span>
+                {% if total_remaining >= 0 %}remaining{% else %}over budget{% endif %}
+                across all categories.
+            </p>
+        </div>
+        <div class="flex-shrink-0 w-full md:w-auto">
+            <a href="{{ url_for('budgets.add') }}"
+               class="w-full md:w-auto px-lg py-md bg-primary text-on-primary text-[14px] font-semibold rounded-lg flex items-center justify-center gap-sm active:scale-95 transition-transform shadow-sm">
+                <span class="material-symbols-outlined">add</span>
+                Set New Budget
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Budget Grid -->
+<section>
+    <h2 class="text-[18px] font-semibold text-primary mb-md">Budget Categories</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
+        {% for budget in budgets %}
+        {% set status = 'over' if budget.percentage >= 100 else ('warning' if budget.percentage >= budget.alert_threshold else 'safe') %}
+        <div class="soft-card p-md rounded-xl relative overflow-hidden hover:shadow-md transition-shadow">
+            {% if status == 'over' %}
+            <div class="absolute left-0 top-0 w-1 h-full bg-error"></div>
+            {% endif %}
+
+            <!-- Header -->
+            <div class="flex justify-between items-start mb-md">
+                <div class="flex items-center gap-sm">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center
+                        {% if status == 'over' %}bg-error-container{% elif status == 'warning' %}bg-tertiary-fixed{% else %}bg-surface-container-low{% endif %}">
+                        <span class="material-symbols-outlined
+                            {% if status == 'over' %}text-error{% elif status == 'warning' %}text-on-tertiary-fixed-variant{% else %}text-secondary{% endif %}">
+                            {% set name_lower = budget.category_name.lower() %}
+                            {% if 'food' in name_lower or 'grocer' in name_lower %}shopping_cart
+                            {% elif 'transport' in name_lower or 'travel' in name_lower %}commute
+                            {% elif 'entertain' in name_lower %}movie
+                            {% elif 'dining' in name_lower or 'restaurant' in name_lower %}restaurant
+                            {% elif 'util' in name_lower %}bolt
+                            {% elif 'health' in name_lower %}medical_services
+                            {% elif 'shop' in name_lower %}shopping_bag
+                            {% else %}category{% endif %}
+                        </span>
+                    </div>
+                    <div>
+                        <h3 class="text-[14px] font-semibold text-primary leading-tight">{{ budget.category_name }}</h3>
+                        <p class="text-[12px] text-on-surface-variant capitalize">{{ budget.period }}</p>
                     </div>
                 </div>
-                <div class="mb-2">
-                    <small class="text-muted">Remaining: £{{ "%.2f"|format(budget.remaining) }}</small>
-                </div>
-                <div>
-                    <a href="{{ url_for('budgets.edit', id=budget.id) }}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-pencil"></i> Edit
+                <span class="text-[11px] font-bold px-sm py-xs rounded-full
+                    {% if status == 'over' %}bg-error text-on-error
+                    {% elif status == 'warning' %}bg-tertiary-fixed text-on-tertiary-fixed-variant
+                    {% else %}bg-secondary-container text-on-secondary-container{% endif %}">
+                    {% if status == 'over' %}Over Limit{% elif status == 'warning' %}Warning{% else %}On Track{% endif %}
+                </span>
+            </div>
+
+            <!-- Amounts -->
+            <div class="flex justify-between items-end mb-xs">
+                <span class="text-[20px] font-semibold {% if status == 'over' %}text-error{% else %}text-primary{% endif %}">
+                    £{{ "%.0f"|format(budget.spending) }}<span class="text-[14px] font-normal text-on-surface-variant"> / £{{ "%.0f"|format(budget.amount) }}</span>
+                </span>
+                <span class="text-[12px] {% if status == 'over' %}text-error{% else %}text-on-surface-variant{% endif %}">
+                    {{ "%.0f"|format(budget.percentage) }}%
+                </span>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="h-2 bg-surface-container rounded-full overflow-hidden mb-md">
+                <div class="h-full rounded-full transition-all duration-700
+                    {% if status == 'over' %}bg-error{% elif status == 'warning' %}bg-on-tertiary-container{% else %}bg-secondary{% endif %}"
+                    style="width:{{ [budget.percentage, 100] | min }}%"></div>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex justify-between items-center">
+                <span class="text-[12px] text-on-surface-variant">
+                    Remaining: <strong class="{% if budget.remaining < 0 %}text-error{% else %}text-on-surface{% endif %}">
+                        £{{ "%.2f"|format(budget.remaining) }}
+                    </strong>
+                </span>
+                <div class="flex gap-xs">
+                    <a href="{{ url_for('budgets.edit', id=budget.id) }}"
+                       class="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors">
+                        <span class="material-symbols-outlined" style="font-size:18px">edit</span>
                     </a>
-                    <form method="POST" action="{{ url_for('budgets.delete', id=budget.id) }}" style="display: inline;">
-                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">
-                            <i class="bi bi-trash"></i> Delete
+                    <form method="POST" action="{{ url_for('budgets.delete', id=budget.id) }}" class="inline"
+                          onsubmit="return confirm('Delete this budget?')">
+                        <button type="submit"
+                                class="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container transition-colors">
+                            <span class="material-symbols-outlined" style="font-size:18px">delete</span>
                         </button>
                     </form>
                 </div>
             </div>
         </div>
-    </div>
-    {% else %}
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body text-center">
-                <p>No budgets yet. <a href="{{ url_for('budgets.add') }}">Create your first budget</a></p>
-            </div>
+        {% else %}
+        <!-- Empty state -->
+        <div class="md:col-span-2 lg:col-span-3 soft-card p-xl rounded-xl flex flex-col items-center justify-center gap-md text-center">
+            <span class="material-symbols-outlined text-on-surface-variant" style="font-size:48px">account_balance_wallet</span>
+            <p class="text-[18px] font-semibold text-primary">No budgets yet</p>
+            <p class="text-[14px] text-on-surface-variant">Set a budget to start tracking your spending</p>
+            <a href="{{ url_for('budgets.add') }}"
+               class="px-lg py-md bg-primary text-on-primary text-[14px] font-semibold rounded-lg active:scale-95 transition-transform">
+                Create your first budget
+            </a>
         </div>
-    </div>
-    {% endfor %}
-</div>
-{% endblock %}
+        {% endfor %}
 
+        {% if budgets %}
+        <!-- Add new card -->
+        <a href="{{ url_for('budgets.add') }}"
+           class="soft-card p-md rounded-xl border-2 border-dashed border-outline-variant flex flex-col items-center justify-center gap-sm group hover:border-primary transition-colors min-h-[200px]">
+            <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-primary group-hover:text-on-primary transition-all">
+                <span class="material-symbols-outlined">add</span>
+            </div>
+            <span class="text-[14px] font-medium text-on-surface-variant group-hover:text-primary transition-colors">Add Budget</span>
+        </a>
+        {% endif %}
+    </div>
+</section>
+
+{% endblock %}

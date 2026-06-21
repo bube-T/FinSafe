@@ -1,69 +1,83 @@
 {% extends "base.html" %}
-
 {% block title %}Reports - FinSafe{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Reports</h1>
 
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-calendar-month"></i> Monthly Report</h5>
-                <p class="card-text">View detailed spending breakdown for a specific month.</p>
-                <form method="GET" action="{{ url_for('reports.monthly') }}" class="row g-3">
-                    <div class="col-md-6">
-                        <label for="month" class="form-label">Month</label>
-                        <select class="form-select" id="month" name="month" required>
-                            {% for m in range(1, 13) %}
-                            <option value="{{ m }}" {% if m == current_month %}selected{% endif %}>
-                                {{ ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m-1] }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="year" class="form-label">Year</label>
-                        <input type="number" class="form-control" id="year" name="year" 
-                               value="{{ current_year }}" min="2020" max="2100" required>
-                    </div>
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-primary">Generate Monthly Report</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-calendar-year"></i> Yearly Report</h5>
-                <p class="card-text">View annual spending summary with monthly breakdowns.</p>
-                <form method="GET" action="{{ url_for('reports.yearly') }}" class="row g-3">
-                    <div class="col-md-12">
-                        <label for="year" class="form-label">Year</label>
-                        <input type="number" class="form-control" id="year" name="year" 
-                               value="{{ current_year }}" min="2020" max="2100" required>
-                    </div>
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-primary">Generate Yearly Report</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+<div class="mb-lg">
+    <h1 class="text-[24px] font-bold text-primary">Reports</h1>
+    <p class="text-[14px] text-on-surface-variant mt-xs">Detailed financial insights</p>
 </div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+
+    <!-- Monthly Report -->
+    <div class="soft-card p-lg rounded-xl">
+        <div class="flex items-center gap-sm mb-md">
+            <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center">
+                <span class="material-symbols-outlined text-on-surface-variant">calendar_month</span>
+            </div>
+            <div>
+                <h3 class="text-[18px] font-semibold text-primary">Monthly Report</h3>
+                <p class="text-[13px] text-on-surface-variant">Detailed breakdown for a month</p>
+            </div>
+        </div>
+        <form method="GET" action="{{ url_for('reports.monthly') }}" class="space-y-md">
+            <div>
+                <label for="month" class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Month</label>
+                <select id="month" name="month" required
+                        class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {% if m == current_month %}selected{% endif %}>
+                        {{ ['January','February','March','April','May','June','July','August','September','October','November','December'][m-1] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="year_m" class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Year</label>
+                <input type="number" id="year_m" name="year" value="{{ current_year }}" min="2020" max="2100" required
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <button type="submit"
+                    class="w-full py-md bg-primary text-on-primary text-[14px] font-semibold rounded-lg active:scale-95 transition-transform">
+                Generate Monthly Report
+            </button>
+        </form>
+    </div>
+
+    <!-- Yearly Report -->
+    <div class="soft-card p-lg rounded-xl">
+        <div class="flex items-center gap-sm mb-md">
+            <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center">
+                <span class="material-symbols-outlined text-on-surface-variant">calendar_today</span>
+            </div>
+            <div>
+                <h3 class="text-[18px] font-semibold text-primary">Yearly Report</h3>
+                <p class="text-[13px] text-on-surface-variant">Annual summary with monthly breakdowns</p>
+            </div>
+        </div>
+        <form method="GET" action="{{ url_for('reports.yearly') }}" class="space-y-md">
+            <div>
+                <label for="year_y" class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Year</label>
+                <input type="number" id="year_y" name="year" value="{{ current_year }}" min="2020" max="2100" required
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <button type="submit"
+                    class="w-full py-md bg-primary text-on-primary text-[14px] font-semibold rounded-lg active:scale-95 transition-transform mt-md">
+                Generate Yearly Report
+            </button>
+        </form>
+    </div>
+
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Set current month and year
     const now = new Date();
-    document.getElementById('year').value = now.getFullYear();
     {% if not current_month %}
-    document.querySelectorAll('#month')[0].value = now.getMonth() + 1;
+    document.getElementById('month').value = now.getMonth() + 1;
     {% endif %}
 </script>
 {% endblock %}
-

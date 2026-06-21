@@ -1,32 +1,47 @@
 {% extends "base.html" %}
-
 {% block title %}Add Income - FinSafe{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Add Income</h1>
+<div class="max-w-lg mx-auto">
+    <div class="flex items-center gap-md mb-lg">
+        <a href="{{ url_for('income.index') }}" class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h1 class="text-[24px] font-bold text-primary">Add Income</h1>
+    </div>
 
-<div class="card">
-    <div class="card-body">
-        <form method="POST">
-            <div class="mb-3">
-                <label for="amount" class="form-label">Amount</label>
-                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+    <div class="soft-card p-lg rounded-xl">
+        <form method="POST" class="space-y-md">
+            <div>
+                <label for="amount" class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Amount (£)</label>
+                <input type="number" step="0.01" id="amount" name="amount" required autofocus
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
             </div>
-            <div class="mb-3">
-                <label for="description" class="form-label">Description</label>
-                <input type="text" class="form-control" id="description" name="description" required>
+            <div>
+                <label for="description" class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Description</label>
+                <input type="text" id="description" name="description" required placeholder="What is this income for?"
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
             </div>
-            <div class="mb-3">
-                <label for="date" class="form-label">Date</label>
-                <input type="date" class="form-control" id="date" name="date" required>
+            <div>
+                <label for="date" class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Date</label>
+                <input type="date" id="date" name="date" required
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
             </div>
-            <div class="mb-3">
-                <label for="source" class="form-label">Source (Optional)</label>
-                <input type="text" class="form-control" id="source" name="source" 
-                       placeholder="e.g., Salary, Freelance, Investment">
+            <div>
+                <label for="source" class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Source (optional)</label>
+                <input type="text" id="source" name="source" placeholder="e.g. Salary, Freelance, Investment"
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
             </div>
-            <button type="submit" class="btn btn-primary">Add Income</button>
-            <a href="{{ url_for('income.index') }}" class="btn btn-secondary">Cancel</a>
+            <div class="flex gap-sm pt-sm">
+                <button type="submit"
+                        class="flex-1 py-md bg-secondary text-on-secondary text-[14px] font-semibold rounded-lg active:scale-95 transition-transform">
+                    Add Income
+                </button>
+                <a href="{{ url_for('income.index') }}"
+                   class="flex-1 py-md bg-surface-container text-on-surface text-[14px] font-medium rounded-lg hover:bg-surface-container-high transition-colors text-center">
+                    Cancel
+                </a>
+            </div>
         </form>
     </div>
 </div>
@@ -37,4 +52,3 @@
     document.getElementById('date').valueAsDate = new Date();
 </script>
 {% endblock %}
-

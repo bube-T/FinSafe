@@ -1,21 +1,33 @@
 {% extends "base.html" %}
-
 {% block title %}Add Category - FinSafe{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Add Category</h1>
+<div class="max-w-lg mx-auto">
+    <div class="flex items-center gap-md mb-lg">
+        <a href="{{ url_for('categories.index') }}" class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h1 class="text-[24px] font-bold text-primary">Add Category</h1>
+    </div>
 
-<div class="card">
-    <div class="card-body">
-        <form method="POST">
-            <div class="mb-3">
-                <label for="name" class="form-label">Category Name</label>
-                <input type="text" class="form-control" id="name" name="name" required>
+    <div class="soft-card p-lg rounded-xl">
+        <form method="POST" class="space-y-md">
+            <div>
+                <label for="name" class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Category Name</label>
+                <input type="text" id="name" name="name" required autofocus placeholder="e.g. Food, Transport, Entertainment"
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
             </div>
-            <button type="submit" class="btn btn-primary">Add Category</button>
-            <a href="{{ url_for('categories.index') }}" class="btn btn-secondary">Cancel</a>
+            <div class="flex gap-sm pt-sm">
+                <button type="submit"
+                        class="flex-1 py-md bg-primary text-on-primary text-[14px] font-semibold rounded-lg active:scale-95 transition-transform">
+                    Add Category
+                </button>
+                <a href="{{ url_for('categories.index') }}"
+                   class="flex-1 py-md bg-surface-container text-on-surface text-[14px] font-medium rounded-lg hover:bg-surface-container-high transition-colors text-center">
+                    Cancel
+                </a>
+            </div>
         </form>
     </div>
 </div>
 {% endblock %}
-

@@ -1,178 +1,144 @@
 {% extends "base.html" %}
-
 {% block title %}Yearly Report - FinSafe{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Yearly Report - {{ year }}</h1>
+
+<!-- Header -->
+<div class="flex justify-between items-start mb-lg flex-wrap gap-sm">
     <div>
-        <a href="{{ url_for('reports.yearly_pdf', year=year) }}" class="btn btn-danger" target="_blank">
-            <i class="bi bi-file-pdf"></i> Export PDF
+        <p class="text-[12px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Yearly Report</p>
+        <h1 class="text-[28px] font-bold text-primary">{{ year }}</h1>
+    </div>
+    <div class="flex gap-sm flex-wrap">
+        <a href="{{ url_for('reports.yearly_pdf', year=year) }}" target="_blank"
+           class="px-md py-sm bg-error text-on-error text-[13px] font-semibold rounded-lg flex items-center gap-xs active:scale-95 transition-transform">
+            <span class="material-symbols-outlined" style="font-size:16px">picture_as_pdf</span>
+            Export PDF
         </a>
-        <a href="{{ url_for('reports.index') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Back to Reports
+        <a href="{{ url_for('reports.index') }}"
+           class="px-md py-sm bg-surface-container text-on-surface text-[13px] font-medium rounded-lg flex items-center gap-xs hover:bg-surface-container-high transition-colors">
+            <span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>
+            Back
         </a>
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Total Spending</h5>
-                <h3 class="text-primary">£{{ "%.2f"|format(total_spending) }}</h3>
-            </div>
-        </div>
+<!-- Summary cards -->
+<section class="grid grid-cols-3 gap-md mb-lg">
+    <div class="soft-card p-md rounded-xl text-center">
+        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Total Spent</p>
+        <p class="text-[24px] font-bold text-primary">£{{ "%.2f"|format(total_spending) }}</p>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Average Monthly</h5>
-                <h3 class="text-info">£{{ "%.2f"|format(avg_monthly) }}</h3>
-            </div>
-        </div>
+    <div class="soft-card p-md rounded-xl text-center">
+        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Avg Monthly</p>
+        <p class="text-[24px] font-bold text-on-surface">£{{ "%.2f"|format(avg_monthly) }}</p>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Total Expenses</h5>
-                <h3 class="text-success">{{ expenses|length }}</h3>
-            </div>
-        </div>
+    <div class="soft-card p-md rounded-xl text-center">
+        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Transactions</p>
+        <p class="text-[24px] font-bold text-secondary">{{ expenses|length }}</p>
     </div>
-</div>
+</section>
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Monthly Breakdown</h5>
-                <canvas id="monthlyChart"></canvas>
-            </div>
-        </div>
+<!-- Charts row -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-md mb-lg">
+    <div class="soft-card p-md rounded-xl">
+        <h3 class="text-[18px] font-semibold text-primary mb-md">Monthly Breakdown</h3>
+        <canvas id="monthlyChart" height="220"></canvas>
     </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Category Breakdown</h5>
-                <canvas id="categoryChart"></canvas>
-            </div>
-        </div>
+    <div class="soft-card p-md rounded-xl">
+        <h3 class="text-[18px] font-semibold text-primary mb-md">Category Breakdown</h3>
+        <canvas id="categoryChart" height="220"></canvas>
     </div>
-</div>
+</section>
 
-<div class="row mt-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Spending by Category</h5>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th>Amount</th>
-                                <th>Count</th>
-                                <th>% of Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for category, amount in category_totals.items()|sort(attribute='1', reverse=True) %}
-                            <tr>
-                                <td>{{ category }}</td>
-                                <td>£{{ "%.2f"|format(amount) }}</td>
-                                <td>{{ category_counts.get(category, 0) }}</td>
-                                <td>{{ "%.1f"|format((amount / total_spending * 100) if total_spending > 0 else 0) }}%</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+<!-- Tables row -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-md">
+    <!-- Category table -->
+    <div class="soft-card p-md rounded-xl">
+        <h3 class="text-[18px] font-semibold text-primary mb-md">By Category</h3>
+        {% if category_totals %}
+        <div class="divide-y divide-outline-variant/30">
+            {% for category, amount in category_totals.items()|sort(attribute='1', reverse=True) %}
+            <div class="flex justify-between items-center py-sm">
+                <span class="text-[13px] font-medium text-on-surface">{{ category }}</span>
+                <div class="text-right">
+                    <span class="text-[13px] font-semibold text-primary">£{{ "%.2f"|format(amount) }}</span>
+                    <span class="text-[11px] text-on-surface-variant ml-xs">
+                        ({{ "%.1f"|format((amount / total_spending * 100) if total_spending > 0 else 0) }}%)
+                    </span>
                 </div>
             </div>
+            {% endfor %}
         </div>
+        {% else %}
+        <p class="text-[14px] text-on-surface-variant">No expenses this year.</p>
+        {% endif %}
     </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Monthly Summary</h5>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Month</th>
-                                <th>Amount</th>
-                                <th>Count</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for month, amount in monthly_totals.items() %}
-                            {% if amount > 0 %}
-                            <tr>
-                                <td>{{ month }}</td>
-                                <td>£{{ "%.2f"|format(amount) }}</td>
-                                <td>{{ monthly_counts.get(month, 0) }}</td>
-                            </tr>
-                            {% endif %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
+
+    <!-- Monthly summary table -->
+    <div class="soft-card p-md rounded-xl">
+        <h3 class="text-[18px] font-semibold text-primary mb-md">Monthly Summary</h3>
+        <div class="divide-y divide-outline-variant/30">
+            {% for month_name, amount in monthly_totals.items() %}
+            {% if amount > 0 %}
+            <div class="flex justify-between items-center py-sm">
+                <span class="text-[13px] font-medium text-on-surface">{{ month_name }}</span>
+                <div class="text-right">
+                    <span class="text-[13px] font-semibold text-primary">£{{ "%.2f"|format(amount) }}</span>
+                    <span class="text-[11px] text-on-surface-variant ml-xs">{{ monthly_counts.get(month_name, 0) }} txns</span>
                 </div>
             </div>
+            {% endif %}
+            {% endfor %}
         </div>
     </div>
-</div>
+</section>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Monthly spending chart
-    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-    const monthlyChart = new Chart(monthlyCtx, {
+    const PALETTE = ['#006c49','#000000','#ffb95f','#cbdbf5','#4edea3','#ba1a1a','#45464d','#6cf8bb'];
+
+    new Chart(document.getElementById('monthlyChart'), {
         type: 'bar',
         data: {
             labels: {{ monthly_totals.keys()|list|tojson }},
             datasets: [{
                 label: 'Spending (£)',
                 data: {{ monthly_totals.values()|list|tojson }},
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
+                backgroundColor: '#e5eeff',
+                borderColor: '#006c49',
+                borderWidth: 2,
+                borderRadius: 6,
             }]
         },
         options: {
             responsive: true,
+            plugins: { legend: { display: false } },
             scales: {
-                y: {
-                    beginAtZero: true
-                }
+                y: { beginAtZero: true, grid: { color: '#e5eeff' }, ticks: { color: '#45464d', font: { size: 11 } } },
+                x: { grid: { display: false }, ticks: { color: '#45464d', font: { size: 11 } } }
             }
         }
     });
 
-    // Category breakdown chart
-    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-    const categoryChart = new Chart(categoryCtx, {
+    new Chart(document.getElementById('categoryChart'), {
         type: 'doughnut',
         data: {
             labels: {{ category_totals.keys()|list|tojson }},
             datasets: [{
                 data: {{ category_totals.values()|list|tojson }},
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.8)',
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(255, 206, 86, 0.8)',
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(153, 102, 255, 0.8)',
-                    'rgba(255, 159, 64, 0.8)',
-                    'rgba(199, 199, 199, 0.8)',
-                    'rgba(83, 102, 255, 0.8)'
-                ]
+                backgroundColor: PALETTE.slice(0, Object.keys({{ category_totals|tojson }}).length),
+                borderWidth: 0,
+                hoverOffset: 4,
             }]
         },
         options: {
-            responsive: true
+            responsive: true,
+            cutout: '65%',
+            plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, color: '#45464d', padding: 12 } } }
         }
     });
 </script>
 {% endblock %}
-

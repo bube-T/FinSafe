@@ -1,145 +1,172 @@
 {% extends "base.html" %}
-
 {% block title %}Expenses - FinSafe{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Expenses</h1>
-    <a href="{{ url_for('expenses.add') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Add Expense
+
+<!-- Page Header -->
+<div class="flex justify-between items-center mb-lg">
+    <div>
+        <h1 class="text-[24px] font-bold text-primary">Expenses</h1>
+        <p class="text-[14px] text-on-surface-variant mt-xs">Track and review your spending</p>
+    </div>
+    <a href="{{ url_for('expenses.add') }}"
+       class="px-lg py-md bg-primary text-on-primary text-[14px] font-semibold rounded-lg flex items-center gap-sm active:scale-95 transition-transform shadow-sm">
+        <span class="material-symbols-outlined">add</span>
+        Add Expense
     </a>
 </div>
 
-<!-- Search and Filter Form -->
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="GET" action="{{ url_for('expenses.index') }}" id="filterForm">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label for="search" class="form-label">Search Description</label>
-                    <input type="text" class="form-control" id="search" name="search" 
-                           value="{{ search_query }}" placeholder="Search expenses...">
-                </div>
-                <div class="col-md-2">
-                    <label for="category" class="form-label">Category</label>
-                    <select class="form-select" id="category" name="category">
-                        <option value="">All Categories</option>
-                        {% for category in categories %}
-                        <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
-                            {{ category.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label for="start_date" class="form-label">Start Date</label>
-                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
-                </div>
-                <div class="col-md-2">
-                    <label for="end_date" class="form-label">End Date</label>
-                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
-                </div>
-                <div class="col-md-1">
-                    <label for="min_amount" class="form-label">Min Amount</label>
-                    <input type="number" step="0.01" class="form-control" id="min_amount" name="min_amount" 
-                           value="{{ min_amount if min_amount else '' }}" placeholder="£0.00">
-                </div>
-                <div class="col-md-1">
-                    <label for="max_amount" class="form-label">Max Amount</label>
-                    <input type="number" step="0.01" class="form-control" id="max_amount" name="max_amount" 
-                           value="{{ max_amount if max_amount else '' }}" placeholder="£0.00">
-                </div>
-                <div class="col-md-1 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-search"></i> Filter
-                    </button>
-                </div>
+<!-- Filter Panel -->
+<div class="soft-card p-md rounded-xl mb-lg">
+    <form method="GET" action="{{ url_for('expenses.index') }}">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-md mb-md">
+            <div>
+                <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Search</label>
+                <input type="text" name="search" value="{{ search_query }}" placeholder="Search..."
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
             </div>
-            {% if search_query or selected_category or start_date or end_date or min_amount or max_amount %}
-            <div class="mt-2">
-                <a href="{{ url_for('expenses.index') }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-x-circle"></i> Clear Filters
+            <div>
+                <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Category</label>
+                <select name="category"
+                        class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">From</label>
+                <input type="date" name="start_date" value="{{ start_date }}"
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">To</label>
+                <input type="date" name="end_date" value="{{ end_date }}"
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-md mb-md">
+            <div>
+                <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Min £</label>
+                <input type="number" step="0.01" name="min_amount"
+                       value="{{ min_amount if min_amount else '' }}" placeholder="0.00"
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-xs">Max £</label>
+                <input type="number" step="0.01" name="max_amount"
+                       value="{{ max_amount if max_amount else '' }}" placeholder="0.00"
+                       class="w-full border border-outline-variant rounded-lg px-md py-sm text-[14px] text-on-surface bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div class="flex items-end gap-sm col-span-2 md:col-span-2">
+                <button type="submit"
+                        class="px-lg py-sm bg-primary text-on-primary text-[14px] font-semibold rounded-lg active:scale-95 transition-transform flex items-center gap-xs">
+                    <span class="material-symbols-outlined" style="font-size:16px">search</span>
+                    Filter
+                </button>
+                {% if search_query or selected_category or start_date or end_date or min_amount or max_amount %}
+                <a href="{{ url_for('expenses.index') }}"
+                   class="px-lg py-sm bg-surface-container text-on-surface text-[14px] font-medium rounded-lg hover:bg-surface-container-high transition-colors flex items-center gap-xs">
+                    <span class="material-symbols-outlined" style="font-size:16px">close</span>
+                    Clear
                 </a>
+                {% endif %}
             </div>
-            {% endif %}
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th>Category</th>
-                        <th>Amount</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for expense in expenses.items %}
-                    <tr>
-                        <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
-                        <td>{{ expense.description }}</td>
-                        <td>{{ expense.category.name if expense.category else 'Uncategorized' }}</td>
-                        <td>£{{ "%.2f"|format(expense.amount) }}</td>
-                        <td>
-                            <a href="{{ url_for('expenses.edit', id=expense.id) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <form method="POST" action="{{ url_for('expenses.delete', id=expense.id) }}" style="display: inline;">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="text-center">No expenses yet. <a href="{{ url_for('expenses.add') }}">Add your first expense</a></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<!-- Transactions List -->
+<div class="soft-card rounded-xl overflow-hidden">
+    {% if expenses.items %}
+    <div class="divide-y divide-outline-variant/30">
+        {% for expense in expenses.items %}
+        <div class="flex items-center justify-between px-md py-sm hover:bg-surface-container-low transition-colors">
+            <div class="flex items-center gap-md">
+                <div class="w-11 h-11 rounded-xl bg-surface-container flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-on-surface-variant">receipt</span>
+                </div>
+                <div>
+                    <p class="text-[14px] font-medium text-on-surface">{{ expense.description }}</p>
+                    <p class="text-[11px] text-on-surface-variant uppercase tracking-tight mt-0.5">
+                        {{ expense.category.name if expense.category else 'Uncategorized' }}
+                        &middot;
+                        {{ expense.date.strftime('%d %b %Y') }}
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-sm ml-md">
+                <p class="text-[18px] font-semibold text-primary whitespace-nowrap">
+                    -£{{ "%.2f"|format(expense.amount) }}
+                </p>
+                <a href="{{ url_for('expenses.edit', id=expense.id) }}"
+                   class="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors">
+                    <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+                </a>
+                <form method="POST" action="{{ url_for('expenses.delete', id=expense.id) }}" class="inline"
+                      onsubmit="return confirm('Delete this expense?')">
+                    <button type="submit"
+                            class="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container transition-colors">
+                        <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+                    </button>
+                </form>
+            </div>
         </div>
-        
-        {% if expenses.pages > 1 %}
-        <nav>
-            <ul class="pagination justify-content-center">
-                {% if expenses.has_prev %}
-                <li class="page-item">
-                    <a class="page-link" href="{{ url_for('expenses.index', page=expenses.prev_num, search=search_query, category=selected_category, start_date=start_date, end_date=end_date, min_amount=min_amount, max_amount=max_amount) }}">Previous</a>
-                </li>
-                {% endif %}
-                {% for page_num in expenses.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                    {% if page_num %}
-                        {% if page_num == expenses.page %}
-                        <li class="page-item active">
-                            <span class="page-link">{{ page_num }}</span>
-                        </li>
-                        {% else %}
-                        <li class="page-item">
-                            <a class="page-link" href="{{ url_for('expenses.index', page=page_num, search=search_query, category=selected_category, start_date=start_date, end_date=end_date, min_amount=min_amount, max_amount=max_amount) }}">{{ page_num }}</a>
-                        </li>
-                        {% endif %}
-                    {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link">…</span>
-                        </li>
-                    {% endif %}
-                {% endfor %}
-                {% if expenses.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="{{ url_for('expenses.index', page=expenses.next_num, search=search_query, category=selected_category, start_date=start_date, end_date=end_date, min_amount=min_amount, max_amount=max_amount) }}">Next</a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if expenses.pages > 1 %}
+    <div class="flex justify-center items-center gap-sm p-md border-t border-outline-variant/30">
+        {% if expenses.has_prev %}
+        <a href="{{ url_for('expenses.index', page=expenses.prev_num, search=search_query, category=selected_category, start_date=start_date, end_date=end_date, min_amount=min_amount, max_amount=max_amount) }}"
+           class="px-md py-sm rounded-lg bg-surface-container text-on-surface text-[13px] font-medium hover:bg-surface-container-high transition-colors flex items-center gap-xs">
+            <span class="material-symbols-outlined" style="font-size:16px">chevron_left</span> Prev
+        </a>
+        {% endif %}
+
+        {% for page_num in expenses.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+            <a href="{{ url_for('expenses.index', page=page_num, search=search_query, category=selected_category, start_date=start_date, end_date=end_date, min_amount=min_amount, max_amount=max_amount) }}"
+               class="w-9 h-9 rounded-lg text-[13px] font-semibold flex items-center justify-center transition-colors
+                   {% if page_num == expenses.page %}bg-primary text-on-primary{% else %}bg-surface-container text-on-surface hover:bg-surface-container-high{% endif %}">
+                {{ page_num }}
+            </a>
+            {% else %}
+            <span class="text-on-surface-variant px-xs">…</span>
+            {% endif %}
+        {% endfor %}
+
+        {% if expenses.has_next %}
+        <a href="{{ url_for('expenses.index', page=expenses.next_num, search=search_query, category=selected_category, start_date=start_date, end_date=end_date, min_amount=min_amount, max_amount=max_amount) }}"
+           class="px-md py-sm rounded-lg bg-surface-container text-on-surface text-[13px] font-medium hover:bg-surface-container-high transition-colors flex items-center gap-xs">
+            Next <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span>
+        </a>
         {% endif %}
     </div>
-</div>
-{% endblock %}
+    {% endif %}
 
+    {% else %}
+    <!-- Empty state -->
+    <div class="flex flex-col items-center justify-center py-xl px-md text-center">
+        <span class="material-symbols-outlined text-on-surface-variant mb-md" style="font-size:48px">receipt_long</span>
+        <p class="text-[20px] font-semibold text-primary mb-xs">No expenses found</p>
+        <p class="text-[14px] text-on-surface-variant mb-lg">
+            {% if search_query or selected_category or start_date or end_date %}
+                Try adjusting your filters to find what you're looking for
+            {% else %}
+                Start tracking your spending by adding your first expense
+            {% endif %}
+        </p>
+        <a href="{{ url_for('expenses.add') }}"
+           class="px-lg py-md bg-primary text-on-primary text-[14px] font-semibold rounded-lg active:scale-95 transition-transform">
+            Add First Expense
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

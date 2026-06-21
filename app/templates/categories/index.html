@@ -1,51 +1,63 @@
 {% extends "base.html" %}
-
 {% block title %}Categories - FinSafe{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Categories</h1>
-    <a href="{{ url_for('categories.add') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Add Category
+
+<div class="flex justify-between items-center mb-lg">
+    <div>
+        <h1 class="text-[24px] font-bold text-primary">Categories</h1>
+        <p class="text-[14px] text-on-surface-variant mt-xs">Organise your expenses</p>
+    </div>
+    <a href="{{ url_for('categories.add') }}"
+       class="px-lg py-md bg-primary text-on-primary text-[14px] font-semibold rounded-lg flex items-center gap-sm active:scale-95 transition-transform shadow-sm">
+        <span class="material-symbols-outlined">add</span>
+        Add Category
     </a>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Created</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for category in categories %}
-                    <tr>
-                        <td>{{ category.name }}</td>
-                        <td>{{ category.created_at.strftime('%Y-%m-%d') }}</td>
-                        <td>
-                            <a href="{{ url_for('categories.edit', id=category.id) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <form method="POST" action="{{ url_for('categories.delete', id=category.id) }}" style="display: inline;">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3" class="text-center">No categories yet. <a href="{{ url_for('categories.add') }}">Add your first category</a></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="soft-card rounded-xl overflow-hidden">
+    {% if categories %}
+    <div class="divide-y divide-outline-variant/30">
+        {% for category in categories %}
+        <div class="flex items-center justify-between px-md py-sm hover:bg-surface-container-low transition-colors">
+            <div class="flex items-center gap-md">
+                <div class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-on-surface-variant">category</span>
+                </div>
+                <div>
+                    <p class="text-[14px] font-medium text-on-surface">{{ category.name }}</p>
+                    <p class="text-[11px] text-on-surface-variant uppercase tracking-tight mt-0.5">
+                        Created {{ category.created_at.strftime('%d %b %Y') }}
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-xs">
+                <a href="{{ url_for('categories.edit', id=category.id) }}"
+                   class="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors">
+                    <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+                </a>
+                <form method="POST" action="{{ url_for('categories.delete', id=category.id) }}" class="inline"
+                      onsubmit="return confirm('Delete this category?')">
+                    <button type="submit"
+                            class="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container transition-colors">
+                        <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+                    </button>
+                </form>
+            </div>
         </div>
+        {% endfor %}
     </div>
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-xl px-md text-center">
+        <span class="material-symbols-outlined text-on-surface-variant mb-md" style="font-size:48px">category</span>
+        <p class="text-[20px] font-semibold text-primary mb-xs">No categories yet</p>
+        <p class="text-[14px] text-on-surface-variant mb-lg">Create categories to organise your expenses</p>
+        <a href="{{ url_for('categories.add') }}"
+           class="px-lg py-md bg-primary text-on-primary text-[14px] font-semibold rounded-lg active:scale-95 transition-transform">
+            Add First Category
+        </a>
+    </div>
+    {% endif %}
 </div>
-{% endblock %}
 
+{% endblock %}
