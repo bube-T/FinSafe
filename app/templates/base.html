@@ -147,9 +147,13 @@
             </div>
         </div>
     </header>
+    {% endif %}{# /if current_user.is_authenticated (sidebar + header) #}
 
-    <!-- Main Content -->
-    <main class="md:pl-20 pt-16 pb-28 md:pb-8 min-h-screen">
+    <!-- Main: authenticated gets sidebar offset + top padding; unauth gets centered -->
+    <main class="{{ 'md:pl-20 pt-16 pb-28 md:pb-8 min-h-screen' if current_user.is_authenticated else 'min-h-screen flex items-center justify-center p-md bg-background' }}">
+
+        {% if current_user.is_authenticated %}
+        <!-- Auth: flash messages inside the max-width wrapper -->
         <div class="max-w-[1280px] mx-auto px-margin-mobile md:px-lg py-md">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -173,33 +177,8 @@
                 </div>
                 {% endif %}
             {% endwith %}
-            {% block content %}{% endblock %}
-        </div>
-    </main>
-
-    <!-- Mobile Bottom Nav -->
-    <nav class="md:hidden fixed bottom-0 left-0 w-full z-50">
-        <div class="flex justify-around items-center py-sm px-md bg-surface border-t border-outline-variant rounded-t-xl shadow-lg">
-            {% set mobile_nav = [
-                ('dashboard.index', 'dashboard', 'Dashboard'),
-                ('expenses.index', 'receipt_long', 'Activity'),
-                ('budgets.index', 'account_balance_wallet', 'Budgets'),
-                ('savings_goals.index', 'savings', 'Goals'),
-            ] %}
-            {% for endpoint, icon, label in mobile_nav %}
-            <a href="{{ url_for(endpoint) }}"
-               class="flex flex-col items-center justify-center px-4 py-1 rounded-full transition-all active:scale-90 {% if ep == endpoint %}bg-secondary-container text-on-secondary-container{% else %}text-on-surface-variant{% endif %}">
-                <span class="material-symbols-outlined">{{ icon }}</span>
-                <span class="text-[11px] font-semibold mt-0.5">{{ label }}</span>
-            </a>
-            {% endfor %}
-        </div>
-    </nav>
-
-    {% else %}
-
-    <!-- Auth layout (no sidebar) -->
-    <main class="min-h-screen flex items-center justify-center p-md bg-background">
+        {% else %}
+        <!-- Unauth: flash messages fixed at top -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
             <div class="fixed top-md inset-x-0 z-50 flex flex-col items-center gap-sm px-md">
@@ -217,9 +196,35 @@
             </div>
             {% endif %}
         {% endwith %}
+        {% endif %}
+
         {% block content %}{% endblock %}
+
+        {% if current_user.is_authenticated %}
+        </div><!-- /max-w wrapper -->
+        {% endif %}
+
     </main>
 
+    <!-- Mobile Bottom Nav (auth only) -->
+    {% if current_user.is_authenticated %}
+    <nav class="md:hidden fixed bottom-0 left-0 w-full z-50">
+        <div class="flex justify-around items-center py-sm px-md bg-surface border-t border-outline-variant rounded-t-xl shadow-lg">
+            {% set mobile_nav = [
+                ('dashboard.index', 'dashboard', 'Dashboard'),
+                ('expenses.index', 'receipt_long', 'Activity'),
+                ('budgets.index', 'account_balance_wallet', 'Budgets'),
+                ('savings_goals.index', 'savings', 'Goals'),
+            ] %}
+            {% for endpoint, icon, label in mobile_nav %}
+            <a href="{{ url_for(endpoint) }}"
+               class="flex flex-col items-center justify-center px-4 py-1 rounded-full transition-all active:scale-90 {% if ep == endpoint %}bg-secondary-container text-on-secondary-container{% else %}text-on-surface-variant{% endif %}">
+                <span class="material-symbols-outlined">{{ icon }}</span>
+                <span class="text-[11px] font-semibold mt-0.5">{{ label }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </nav>
     {% endif %}
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
