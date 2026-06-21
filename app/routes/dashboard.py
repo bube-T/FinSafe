@@ -20,6 +20,39 @@ def root():
 def index():
     return render_template('dashboard/index.html')
 
+@bp.route('/api/summary')
+@login_required
+def api_summary():
+    """CV-spec endpoint: total income, total expenses, and spending by category for the current month"""
+    today = datetime.now()
+    start_of_month = today.replace(day=1).date()
+
+    total_income = db.session.query(func.sum(Income.amount)).filter(
+        Income.user_id == current_user.id,
+        Income.date >= start_of_month
+    ).scalar() or 0
+
+    total_expenses = db.session.query(func.sum(Expense.amount)).filter(
+        Expense.user_id == current_user.id,
+        Expense.date >= start_of_month
+    ).scalar() or 0
+
+    expenses = Expense.query.filter(
+        Expense.user_id == current_user.id,
+        Expense.date >= start_of_month
+    ).all()
+
+    by_category = defaultdict(float)
+    for expense in expenses:
+        label = expense.category.name if expense.category else 'Uncategorized'
+        by_category[label] += float(expense.amount)
+
+    return jsonify({
+        'total_income': round(float(total_income), 2),
+        'total_expenses': round(float(total_expenses), 2),
+        'by_category': dict(by_category)
+    })
+
 @bp.route('/api/spending-trends')
 @login_required
 def api_spending_trends():
