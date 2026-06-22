@@ -95,6 +95,86 @@
         </form>
     </section>
 
+    <!-- ── Appearance ── -->
+    <section class="soft-card rounded-xl overflow-hidden">
+        <div class="px-lg pt-lg pb-sm border-b border-outline-variant/30 flex items-center gap-sm">
+            <span class="material-symbols-outlined text-on-surface-variant">palette</span>
+            <h2 class="text-[16px] font-semibold text-on-surface">Appearance</h2>
+        </div>
+        <div class="px-lg py-md">
+            <p class="text-[13px] text-on-surface-variant mb-md">Choose how FinSafe looks. Your preference is saved locally.</p>
+            <div class="grid grid-cols-2 gap-md" id="theme-cards">
+
+                <!-- Light theme card -->
+                <button data-theme-val="light" onclick="selectTheme('light')"
+                        class="theme-card relative rounded-xl border-2 p-sm text-left transition-all focus:outline-none">
+                    <!-- Mini preview (hardcoded light colors so it always looks light) -->
+                    <div class="rounded-lg overflow-hidden mb-sm" style="background:#f8f9ff; border:1px solid #e0e0e0">
+                        <!-- fake header -->
+                        <div style="background:#000000; padding:6px 8px; display:flex; align-items:center; gap:6px">
+                            <div style="width:14px;height:14px;background:#ffffff;border-radius:50%;opacity:.9"></div>
+                            <div style="width:40px;height:6px;background:#ffffff;border-radius:4px;opacity:.6"></div>
+                        </div>
+                        <!-- fake cards -->
+                        <div style="padding:6px; display:flex; gap:4px">
+                            <div style="flex:1;background:#ffffff;border-radius:6px;padding:5px;border:1px solid #e0e0e0">
+                                <div style="width:16px;height:16px;background:#006c49;border-radius:50%;margin-bottom:4px"></div>
+                                <div style="height:5px;background:#e5eeff;border-radius:3px;margin-bottom:3px"></div>
+                                <div style="height:5px;background:#e5eeff;border-radius:3px;width:65%"></div>
+                            </div>
+                            <div style="flex:1;background:#ffffff;border-radius:6px;padding:5px;border:1px solid #e0e0e0">
+                                <div style="width:16px;height:16px;background:#000000;border-radius:50%;margin-bottom:4px"></div>
+                                <div style="height:5px;background:#e5eeff;border-radius:3px;margin-bottom:3px"></div>
+                                <div style="height:5px;background:#e5eeff;border-radius:3px;width:80%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-xs">
+                            <span class="material-symbols-outlined text-[16px] text-on-surface-variant">light_mode</span>
+                            <span class="text-[13px] font-semibold text-on-surface">Light</span>
+                        </div>
+                        <span class="theme-check material-symbols-outlined text-[16px] text-secondary hidden">check_circle</span>
+                    </div>
+                </button>
+
+                <!-- Dark theme card -->
+                <button data-theme-val="dark" onclick="selectTheme('dark')"
+                        class="theme-card relative rounded-xl border-2 p-sm text-left transition-all focus:outline-none">
+                    <!-- Mini preview (hardcoded dark colors so it always looks dark) -->
+                    <div class="rounded-lg overflow-hidden mb-sm" style="background:#0f1724; border:1px solid #2d3a52">
+                        <!-- fake header -->
+                        <div style="background:#bec6e0; padding:6px 8px; display:flex; align-items:center; gap:6px">
+                            <div style="width:14px;height:14px;background:#131d2e;border-radius:50%;opacity:.9"></div>
+                            <div style="width:40px;height:6px;background:#131d2e;border-radius:4px;opacity:.6"></div>
+                        </div>
+                        <!-- fake cards -->
+                        <div style="padding:6px; display:flex; gap:4px">
+                            <div style="flex:1;background:#1e2d44;border-radius:6px;padding:5px;border:1px solid #2d3a52">
+                                <div style="width:16px;height:16px;background:#4edea3;border-radius:50%;margin-bottom:4px"></div>
+                                <div style="height:5px;background:#2d3a52;border-radius:3px;margin-bottom:3px"></div>
+                                <div style="height:5px;background:#2d3a52;border-radius:3px;width:65%"></div>
+                            </div>
+                            <div style="flex:1;background:#1e2d44;border-radius:6px;padding:5px;border:1px solid #2d3a52">
+                                <div style="width:16px;height:16px;background:#bec6e0;border-radius:50%;margin-bottom:4px"></div>
+                                <div style="height:5px;background:#2d3a52;border-radius:3px;margin-bottom:3px"></div>
+                                <div style="height:5px;background:#2d3a52;border-radius:3px;width:80%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-xs">
+                            <span class="material-symbols-outlined text-[16px] text-on-surface-variant">dark_mode</span>
+                            <span class="text-[13px] font-semibold text-on-surface">Dark</span>
+                        </div>
+                        <span class="theme-check material-symbols-outlined text-[16px] text-secondary hidden">check_circle</span>
+                    </div>
+                </button>
+
+            </div>
+        </div>
+    </section>
+
     <!-- ── Data & Tools ── -->
     <section class="soft-card rounded-xl overflow-hidden">
         <div class="px-lg pt-lg pb-sm border-b border-outline-variant/30 flex items-center gap-sm">
@@ -204,6 +284,7 @@
 
 {% block extra_js %}
 <script>
+    // ── Delete account toggle ──
     document.getElementById('show-delete-btn')?.addEventListener('click', () => {
         document.getElementById('delete-form').classList.remove('hidden');
         document.getElementById('show-delete-btn').classList.add('hidden');
@@ -212,5 +293,27 @@
         document.getElementById('delete-form').classList.add('hidden');
         document.getElementById('show-delete-btn').classList.remove('hidden');
     });
+
+    // ── Theme cards ──
+    function selectTheme(t) {
+        // applyTheme() is defined in base.html
+        if (typeof applyTheme === 'function') applyTheme(t);
+        refreshThemeCards();
+    }
+
+    function refreshThemeCards() {
+        const current = document.documentElement.getAttribute('data-theme') || 'light';
+        document.querySelectorAll('.theme-card').forEach(card => {
+            const val     = card.dataset.themeVal;
+            const isActive = val === current;
+            const checkEl  = card.querySelector('.theme-check');
+            card.classList.toggle('border-secondary', isActive);
+            card.classList.toggle('border-outline-variant', !isActive);
+            checkEl?.classList.toggle('hidden', !isActive);
+        });
+    }
+
+    // Initialise card state on load
+    refreshThemeCards();
 </script>
 {% endblock %}

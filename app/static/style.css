@@ -1,5 +1,119 @@
 /* FinSafe — custom styles (Tailwind handles layout) */
 
+/* ──────────────────────────────────────────────────
+   MD3 Design Tokens as CSS custom properties.
+   Tailwind colours reference these via rgb(var(--fs-X)).
+   Switching [data-theme="dark"] on <html> re-maps all
+   tokens instantly — no JS class-toggling per element.
+   ────────────────────────────────────────────────── */
+:root {
+  /* Neutral surfaces */
+  --fs-background:                248 249 255;
+  --fs-on-background:             11 28 48;
+  --fs-surface:                   248 249 255;
+  --fs-on-surface:                11 28 48;
+  --fs-surface-variant:           211 228 254;
+  --fs-on-surface-variant:        69 70 77;
+  --fs-surface-container:         229 238 255;
+  --fs-surface-container-low:     239 244 255;
+  --fs-surface-container-high:    220 233 255;
+  --fs-surface-container-highest: 211 228 254;
+  --fs-surface-container-lowest:  255 255 255;
+  --fs-surface-dim:               203 219 245;
+  --fs-surface-bright:            248 249 255;
+  /* Primary (black → light-blue in dark) */
+  --fs-primary:                   0 0 0;
+  --fs-on-primary:                255 255 255;
+  --fs-primary-container:         19 27 46;
+  --fs-on-primary-container:      124 131 155;
+  --fs-primary-fixed:             218 226 253;
+  --fs-primary-fixed-dim:         190 198 224;
+  --fs-on-primary-fixed:          19 27 46;
+  --fs-on-primary-fixed-variant:  63 70 92;
+  --fs-inverse-primary:           190 198 224;
+  /* Secondary (green) */
+  --fs-secondary:                 0 108 73;
+  --fs-on-secondary:              255 255 255;
+  --fs-secondary-container:       108 248 187;
+  --fs-on-secondary-container:    0 113 77;
+  --fs-secondary-fixed:           111 251 190;
+  --fs-secondary-fixed-dim:       78 222 163;
+  --fs-on-secondary-fixed:        0 33 19;
+  --fs-on-secondary-fixed-variant:0 82 54;
+  /* Tertiary (amber) */
+  --fs-tertiary:                  0 0 0;
+  --fs-on-tertiary:               255 255 255;
+  --fs-tertiary-container:        42 23 0;
+  --fs-on-tertiary-container:     184 117 0;
+  --fs-tertiary-fixed:            255 221 184;
+  --fs-tertiary-fixed-dim:        255 185 95;
+  --fs-on-tertiary-fixed:         42 23 0;
+  --fs-on-tertiary-fixed-variant: 101 62 0;
+  /* Error */
+  --fs-error:                     186 26 26;
+  --fs-on-error:                  255 255 255;
+  --fs-error-container:           255 218 214;
+  --fs-on-error-container:        147 0 10;
+  /* Outline */
+  --fs-outline:                   118 119 125;
+  --fs-outline-variant:           198 198 205;
+  /* Inverse */
+  --fs-inverse-surface:           33 49 69;
+  --fs-inverse-on-surface:        234 241 255;
+  --fs-surface-tint:              86 94 116;
+}
+
+[data-theme="dark"] {
+  --fs-background:                15 23 36;
+  --fs-on-background:             220 231 255;
+  --fs-surface:                   19 29 46;
+  --fs-on-surface:                220 231 255;
+  --fs-surface-variant:           45 58 82;
+  --fs-on-surface-variant:        160 170 187;
+  --fs-surface-container:         30 45 68;
+  --fs-surface-container-low:     23 34 52;
+  --fs-surface-container-high:    37 51 80;
+  --fs-surface-container-highest: 45 58 82;
+  --fs-surface-container-lowest:  13 21 32;
+  --fs-surface-dim:               15 23 36;
+  --fs-surface-bright:            45 58 82;
+  --fs-primary:                   190 198 224;
+  --fs-on-primary:                19 27 46;
+  --fs-primary-container:         45 58 82;
+  --fs-on-primary-container:      218 226 253;
+  --fs-primary-fixed:             218 226 253;
+  --fs-primary-fixed-dim:         190 198 224;
+  --fs-on-primary-fixed:          19 27 46;
+  --fs-on-primary-fixed-variant:  63 70 92;
+  --fs-inverse-primary:           63 70 92;
+  --fs-secondary:                 78 222 163;
+  --fs-on-secondary:              0 33 19;
+  --fs-secondary-container:       0 82 54;
+  --fs-on-secondary-container:    111 251 190;
+  --fs-secondary-fixed:           111 251 190;
+  --fs-secondary-fixed-dim:       78 222 163;
+  --fs-on-secondary-fixed:        0 33 19;
+  --fs-on-secondary-fixed-variant:0 82 54;
+  --fs-tertiary:                  255 185 95;
+  --fs-on-tertiary:               42 23 0;
+  --fs-tertiary-container:        101 62 0;
+  --fs-on-tertiary-container:     255 221 184;
+  --fs-tertiary-fixed:            255 221 184;
+  --fs-tertiary-fixed-dim:        255 185 95;
+  --fs-on-tertiary-fixed:         42 23 0;
+  --fs-on-tertiary-fixed-variant: 101 62 0;
+  --fs-error:                     255 180 171;
+  --fs-on-error:                  105 0 5;
+  --fs-error-container:           147 0 10;
+  --fs-on-error-container:        255 218 214;
+  --fs-outline:                   143 144 153;
+  --fs-outline-variant:           69 70 77;
+  --fs-inverse-surface:           218 226 253;
+  --fs-inverse-on-surface:        33 49 69;
+  --fs-surface-tint:              190 198 224;
+}
+
+/* ── Base ── */
 body {
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -9,39 +123,39 @@ body {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* Card component */
+/* ── Card ── */
 .soft-card {
-    background-color: #ffffff;
-    border: 1px solid #E2E8F0;
-    box-shadow: 0px 4px 6px -1px rgba(15, 23, 42, 0.05);
-    transition: box-shadow 0.2s ease;
+    background-color: rgb(var(--fs-surface-container-lowest));
+    border: 1px solid rgb(var(--fs-outline-variant) / 0.45);
+    box-shadow: 0px 4px 6px -1px rgb(var(--fs-on-background) / 0.05);
+    transition: box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .soft-card:hover {
-    box-shadow: 0px 10px 15px -3px rgba(15, 23, 42, 0.08);
+    box-shadow: 0px 10px 15px -3px rgb(var(--fs-on-background) / 0.08);
 }
 
-/* Progress bar animation */
+/* ── Progress bar animation ── */
 @keyframes fill-progress {
     from { width: 0; }
-    to { width: var(--progress, 0%); }
+    to   { width: var(--progress, 0%); }
 }
 
 .progress-bar-fill {
     animation: fill-progress 1.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
 
-/* Goal card lift on hover */
+/* ── Goal card lift ── */
 .goal-card-hover {
     transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .goal-card-hover:hover {
     transform: translateY(-4px);
-    box-shadow: 0px 12px 20px -4px rgba(15, 23, 42, 0.12);
+    box-shadow: 0px 12px 20px -4px rgb(var(--fs-on-background) / 0.12);
 }
 
-/* Form inputs — override Tailwind forms plugin defaults */
+/* ── Form inputs ── */
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -49,17 +163,18 @@ input[type="number"],
 input[type="date"],
 select,
 textarea {
-    border-color: #c6c6cd;
+    border-color: rgb(var(--fs-outline-variant));
     border-radius: 0.5rem;
-    background-color: #ffffff;
-    color: #0b1c30;
+    background-color: rgb(var(--fs-surface-container-lowest));
+    color: rgb(var(--fs-on-surface));
     font-size: 14px;
+    transition: border-color 0.15s, box-shadow 0.15s, background-color 0.2s;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-    border-color: #006c49;
-    box-shadow: 0 0 0 3px rgba(0, 108, 73, 0.15);
+    border-color: rgb(var(--fs-secondary));
+    box-shadow: 0 0 0 3px rgb(var(--fs-secondary) / 0.15);
     outline: none;
 }
