@@ -84,7 +84,8 @@
     {% if expenses.items %}
     <div class="divide-y divide-outline-variant/30">
         {% for expense in expenses.items %}
-        <div class="flex items-center justify-between px-md py-sm hover:bg-surface-container-low transition-colors">
+        <div class="flex items-center justify-between px-md py-sm hover:bg-surface-container-low transition-colors expense-row"
+             data-expense-id="{{ expense.id }}">
             <div class="flex items-center gap-md">
                 <div class="w-11 h-11 rounded-xl bg-surface-container flex items-center justify-center flex-shrink-0">
                     <span class="material-symbols-outlined text-on-surface-variant">receipt</span>
@@ -106,13 +107,10 @@
                    class="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors">
                     <span class="material-symbols-outlined" style="font-size:18px">edit</span>
                 </a>
-                <form method="POST" action="{{ url_for('expenses.delete', id=expense.id) }}" class="inline"
-                      onsubmit="return confirm('Delete this expense?')">
-                    <button type="submit"
-                            class="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container transition-colors">
-                        <span class="material-symbols-outlined" style="font-size:18px">delete</span>
-                    </button>
-                </form>
+                <button data-delete-id="{{ expense.id }}"
+                        class="delete-btn p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container transition-colors">
+                    <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+                </button>
             </div>
         </div>
         {% endfor %}
@@ -169,4 +167,55 @@
     {% endif %}
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showToast(msg, type) {
+        const t = document.createElement('div');
+        t.className = `fixed bottom-6 right-4 z-50 px-md py-sm rounded-xl shadow-lg text-[14px] font-medium transition-opacity
+            ${type === 'error' ? 'bg-error text-on-error' : 'bg-secondary text-on-secondary'}`;
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; }, 2500);
+        setTimeout(() => t.remove(), 2800);
+    }
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id  = btn.dataset.deleteId;
+            const row = document.querySelector(`.expense-row[data-expense-id="${id}"]`);
+
+            // Optimistic: dim immediately so user sees instant feedback
+            row.style.transition    = 'opacity 0.15s, max-height 0.25s';
+            row.style.overflow      = 'hidden';
+            row.style.opacity       = '0.35';
+            row.style.pointerEvents = 'none';
+
+            try {
+                const res = await fetch(`/expenses/delete/${id}`, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                });
+
+                if (res.ok) {
+                    row.style.maxHeight = row.scrollHeight + 'px';
+                    requestAnimationFrame(() => {
+                        row.style.maxHeight = '0';
+                        row.style.opacity   = '0';
+                    });
+                    setTimeout(() => row.remove(), 260);
+                } else {
+                    row.style.opacity       = '1';
+                    row.style.pointerEvents = 'auto';
+                    showToast('Could not delete — please try again.', 'error');
+                }
+            } catch {
+                row.style.opacity       = '1';
+                row.style.pointerEvents = 'auto';
+                showToast('Network error — please try again.', 'error');
+            }
+        });
+    });
+</script>
 {% endblock %}

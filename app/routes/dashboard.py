@@ -1,24 +1,30 @@
 from flask import Blueprint, render_template, jsonify, redirect, url_for
 from flask_login import login_required, current_user
-from app import db
+from app import db, cache
 from app.models import Expense, Income, Budget, Category, SavingsGoal
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
 from collections import defaultdict
+import os
 
 bp = Blueprint('dashboard', __name__)
 
+
+def _ck(suffix):
+    """Build a per-user cache key."""
+    return f'u{current_user.id}_{suffix}'
+
+
 @bp.route('/api/health')
 def health():
-    """Shows which database is connected and whether tables exist."""
-    import os
-    db_url = os.getenv('DATABASE_URL', 'not set')
-    db_type = 'postgresql' if 'postgresql' in db_url or 'postgres' in db_url else ('sqlite' if 'sqlite' in db_url else 'unknown')
+    db_url  = os.getenv('DATABASE_URL', 'not set')
+    db_type = ('postgresql' if 'postgresql' in db_url or 'postgres' in db_url
+               else 'sqlite' if 'sqlite' in db_url else 'unknown')
     try:
         from app.models import User
         user_count = User.query.count()
         db_ok = True
-    except Exception as e:
+    except Exception:
         user_count = None
         db_ok = False
     return jsonify({
@@ -28,23 +34,24 @@ def health():
         'DATABASE_URL_set': db_url != 'not set',
     })
 
+
 @bp.route('/')
 def root():
-    """Root route - redirect to dashboard or login"""
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))
     return redirect(url_for('auth.login'))
+
 
 @bp.route('/dashboard')
 @login_required
 def index():
     return render_template('dashboard/index.html')
 
+
 @bp.route('/api/summary')
 @login_required
 def api_summary():
-    """CV-spec endpoint: total income, total expenses, and spending by category for the current month"""
-    today = datetime.now()
+    today          = datetime.now()
     start_of_month = today.replace(day=1).date()
 
     total_income = db.session.query(func.sum(Income.amount)).filter(
@@ -68,195 +75,196 @@ def api_summary():
         by_category[label] += float(expense.amount)
 
     return jsonify({
-        'total_income': round(float(total_income), 2),
+        'total_income':   round(float(total_income), 2),
         'total_expenses': round(float(total_expenses), 2),
-        'by_category': dict(by_category)
+        'by_category':    dict(by_category),
     })
+
 
 @bp.route('/api/spending-trends')
 @login_required
 def api_spending_trends():
-    """Get spending trends for the last 6 months"""
-    six_months_ago = datetime.now() - timedelta(days=180)
-    
-    expenses = Expense.query.filter(
+    key    = _ck('spending_trends')
+    cached = cache.get(key)
+    if cached is not None:
+        return jsonify(cached)
+
+    six_months_ago   = datetime.now() - timedelta(days=180)
+    expenses         = Expense.query.filter(
         Expense.user_id == current_user.id,
-        Expense.date >= six_months_ago.date()
+        Expense.date    >= six_months_ago.date()
     ).all()
-    
-    # Group by month
+
     monthly_spending = defaultdict(float)
     for expense in expenses:
-        month_key = expense.date.strftime('%Y-%m')
-        monthly_spending[month_key] += float(expense.amount)
-    
-    # Sort by month
-    sorted_months = sorted(monthly_spending.keys())
-    
-    return jsonify({
+        monthly_spending[expense.date.strftime('%Y-%m')] += float(expense.amount)
+
+    sorted_months = sorted(monthly_spending)
+    result = {
         'labels': sorted_months,
-        'data': [monthly_spending[month] for month in sorted_months]
-    })
+        'data':   [monthly_spending[m] for m in sorted_months],
+    }
+    cache.set(key, result, timeout=300)   # 5-minute TTL — changes slowly
+    return jsonify(result)
+
 
 @bp.route('/api/category-breakdown')
 @login_required
 def api_category_breakdown():
-    """Get spending breakdown by category for current month"""
-    today = datetime.now()
+    key    = _ck('category_breakdown')
+    cached = cache.get(key)
+    if cached is not None:
+        return jsonify(cached)
+
+    today          = datetime.now()
     start_of_month = today.replace(day=1).date()
-    
-    expenses = Expense.query.filter(
+    expenses       = Expense.query.filter(
         Expense.user_id == current_user.id,
-        Expense.date >= start_of_month
+        Expense.date    >= start_of_month
     ).all()
-    
+
     category_spending = defaultdict(float)
-    uncategorized = 0.0
-    
+    uncategorized     = 0.0
     for expense in expenses:
         if expense.category:
             category_spending[expense.category.name] += float(expense.amount)
         else:
             uncategorized += float(expense.amount)
-    
-    if uncategorized > 0:
+    if uncategorized:
         category_spending['Uncategorized'] = uncategorized
-    
-    return jsonify({
+
+    result = {
         'labels': list(category_spending.keys()),
-        'data': list(category_spending.values())
-    })
+        'data':   list(category_spending.values()),
+    }
+    cache.set(key, result, timeout=120)
+    return jsonify(result)
+
 
 @bp.route('/api/monthly-summary')
 @login_required
 def api_monthly_summary():
-    """Get summary for current month"""
-    today = datetime.now()
+    key    = _ck('monthly_summary')
+    cached = cache.get(key)
+    if cached is not None:
+        return jsonify(cached)
+
+    today          = datetime.now()
     start_of_month = today.replace(day=1).date()
-    
+
     total_spending = db.session.query(func.sum(Expense.amount)).filter(
         Expense.user_id == current_user.id,
-        Expense.date >= start_of_month
+        Expense.date    >= start_of_month
     ).scalar() or 0
-    
+
     total_income = db.session.query(func.sum(Income.amount)).filter(
         Income.user_id == current_user.id,
-        Income.date >= start_of_month
+        Income.date    >= start_of_month
     ).scalar() or 0
-    
-    net_cash_flow = float(total_income) - float(total_spending)
-    
+
     expense_count = Expense.query.filter(
         Expense.user_id == current_user.id,
-        Expense.date >= start_of_month
+        Expense.date    >= start_of_month
     ).count()
-    
-    # Get average daily spending
+
     days_in_month = today.day
-    avg_daily = float(total_spending) / days_in_month if days_in_month > 0 else 0
-    
-    # Get budget status
-    budgets = Budget.query.filter_by(user_id=current_user.id).all()
+    avg_daily     = float(total_spending) / days_in_month if days_in_month else 0
+
+    budgets       = Budget.query.filter_by(user_id=current_user.id).all()
     budget_alerts = [b.to_dict() for b in budgets if b.is_alert_threshold_reached()]
-    
-    # Get spending vs budget by category for current month
-    categories = Category.query.filter_by(user_id=current_user.id).all()
+
+    categories      = Category.query.filter_by(user_id=current_user.id).all()
     category_budgets = []
-    
     for category in categories:
-        # Get budget for this category (monthly)
         budget = Budget.query.filter_by(
-            user_id=current_user.id,
-            category_id=category.id,
-            period='monthly'
+            user_id=current_user.id, category_id=category.id, period='monthly'
         ).first()
-        
         if budget:
-            # Calculate spending for this category this month
-            category_spending = db.session.query(func.sum(Expense.amount)).filter(
-                Expense.user_id == current_user.id,
+            cat_spending = db.session.query(func.sum(Expense.amount)).filter(
+                Expense.user_id     == current_user.id,
                 Expense.category_id == category.id,
-                Expense.date >= start_of_month
+                Expense.date        >= start_of_month,
             ).scalar() or 0
-            
             category_budgets.append({
-                'category_name': category.name,
+                'category_name':  category.name,
                 'category_color': category.color,
-                'budget_amount': float(budget.amount),
-                'spending': float(category_spending),
-                'remaining': float(budget.amount) - float(category_spending),
-                'percentage': (float(category_spending) / float(budget.amount) * 100) if budget.amount > 0 else 0
+                'budget_amount':  float(budget.amount),
+                'spending':       float(cat_spending),
+                'remaining':      float(budget.amount) - float(cat_spending),
+                'percentage':     (float(cat_spending) / float(budget.amount) * 100) if budget.amount else 0,
             })
-    
-    return jsonify({
-        'total_spending': float(total_spending),
-        'total_income': float(total_income),
-        'net_cash_flow': round(net_cash_flow, 2),
-        'expense_count': expense_count,
-        'avg_daily': round(avg_daily, 2),
-        'budget_alerts': budget_alerts,
-        'category_budgets': category_budgets
-    })
+
+    result = {
+        'total_spending':   float(total_spending),
+        'total_income':     float(total_income),
+        'net_cash_flow':    round(float(total_income) - float(total_spending), 2),
+        'expense_count':    expense_count,
+        'avg_daily':        round(avg_daily, 2),
+        'budget_alerts':    budget_alerts,
+        'category_budgets': category_budgets,
+    }
+    cache.set(key, result, timeout=120)
+    return jsonify(result)
+
 
 @bp.route('/api/recent-expenses')
 @login_required
 def api_recent_expenses():
-    """Get recent expenses for dashboard"""
+    key    = _ck('recent_expenses')
+    cached = cache.get(key)
+    if cached is not None:
+        return jsonify(cached)
+
     expenses = Expense.query.filter_by(user_id=current_user.id)\
-        .order_by(Expense.date.desc())\
-        .limit(10)\
-        .all()
-    
-    return jsonify([expense.to_dict() for expense in expenses])
+        .order_by(Expense.date.desc()).limit(10).all()
+    result   = [e.to_dict() for e in expenses]
+    cache.set(key, result, timeout=60)
+    return jsonify(result)
+
 
 @bp.route('/api/net-worth')
 @login_required
 def api_net_worth():
-    """Calculate net worth (total income - total expenses + savings goals)"""
-    # Total income (all time)
-    total_income = db.session.query(func.sum(Income.amount)).filter_by(
-        user_id=current_user.id
-    ).scalar() or 0
-    
-    # Total expenses (all time)
-    total_expenses = db.session.query(func.sum(Expense.amount)).filter_by(
-        user_id=current_user.id
-    ).scalar() or 0
-    
-    # Total savings from goals
-    total_savings = db.session.query(func.sum(SavingsGoal.current_amount)).filter_by(
-        user_id=current_user.id
-    ).scalar() or 0
-    
-    # Net worth = Income - Expenses + Savings
-    net_worth = float(total_income) - float(total_expenses) + float(total_savings)
-    
-    return jsonify({
-        'total_income': float(total_income),
+    key    = _ck('net_worth')
+    cached = cache.get(key)
+    if cached is not None:
+        return jsonify(cached)
+
+    total_income   = db.session.query(func.sum(Income.amount)).filter_by(user_id=current_user.id).scalar() or 0
+    total_expenses = db.session.query(func.sum(Expense.amount)).filter_by(user_id=current_user.id).scalar() or 0
+    total_savings  = db.session.query(func.sum(SavingsGoal.current_amount)).filter_by(user_id=current_user.id).scalar() or 0
+
+    result = {
+        'total_income':   float(total_income),
         'total_expenses': float(total_expenses),
-        'total_savings': float(total_savings),
-        'net_worth': round(net_worth, 2)
-    })
+        'total_savings':  float(total_savings),
+        'net_worth':      round(float(total_income) - float(total_expenses) + float(total_savings), 2),
+    }
+    cache.set(key, result, timeout=120)
+    return jsonify(result)
+
 
 @bp.route('/api/notifications')
 @login_required
 def api_notifications():
-    """Return active budget alerts and completed savings goals as notifications."""
-    notifications = []
+    key    = _ck('notifications')
+    cached = cache.get(key)
+    if cached is not None:
+        return jsonify(cached)
 
+    notifications = []
     for b in Budget.query.filter_by(user_id=current_user.id).all():
-        pct = b.get_percentage_used()
+        pct  = b.get_percentage_used()
+        over = pct >= 100
         if pct >= float(b.alert_threshold):
             label = b.category.name if b.category else 'Overall'
-            over  = pct >= 100
             notifications.append({
                 'type':     'budget_alert',
-                'icon':     'warning' if not over else 'error',
+                'icon':     'error' if over else 'warning',
                 'title':    f'{"Over" if over else "Approaching"} budget: {label}',
                 'message':  f'{pct:.0f}% used — £{b.get_current_spending():.2f} of £{float(b.amount):.2f}',
                 'severity': 'error' if over else 'warning',
             })
-
     for g in SavingsGoal.query.filter_by(user_id=current_user.id).all():
         if g.is_completed():
             notifications.append({
@@ -267,24 +275,30 @@ def api_notifications():
                 'severity': 'success',
             })
 
-    return jsonify({'count': len(notifications), 'notifications': notifications})
+    result = {'count': len(notifications), 'notifications': notifications}
+    cache.set(key, result, timeout=60)
+    return jsonify(result)
+
 
 @bp.route('/api/savings-goals-summary')
 @login_required
 def api_savings_goals_summary():
-    """Get summary of savings goals"""
-    goals = SavingsGoal.query.filter_by(user_id=current_user.id).all()
-    
-    total_target = sum(float(g.target_amount) for g in goals)
-    total_current = sum(float(g.current_amount) for g in goals)
-    completed_count = sum(1 for g in goals if g.is_completed())
-    
-    return jsonify({
-        'total_goals': len(goals),
-        'completed_goals': completed_count,
-        'total_target': round(total_target, 2),
-        'total_current': round(total_current, 2),
-        'total_progress': round((total_current / total_target * 100) if total_target > 0 else 0, 2),
-        'goals': [g.to_dict() for g in goals]
-    })
+    key    = _ck('savings_goals_summary')
+    cached = cache.get(key)
+    if cached is not None:
+        return jsonify(cached)
 
+    goals         = SavingsGoal.query.filter_by(user_id=current_user.id).all()
+    total_target  = sum(float(g.target_amount)  for g in goals)
+    total_current = sum(float(g.current_amount) for g in goals)
+
+    result = {
+        'total_goals':    len(goals),
+        'completed_goals': sum(1 for g in goals if g.is_completed()),
+        'total_target':   round(total_target, 2),
+        'total_current':  round(total_current, 2),
+        'total_progress': round((total_current / total_target * 100) if total_target else 0, 2),
+        'goals':          [g.to_dict() for g in goals],
+    }
+    cache.set(key, result, timeout=120)
+    return jsonify(result)

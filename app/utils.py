@@ -1,31 +1,27 @@
-"""Utility functions for the FinSafe app"""
-
-from app import db
+from app import db, cache
 from app.models import Category
 
-# Default categories with colors for Phase 1 MVP
 DEFAULT_CATEGORIES = [
-    {'name': 'Food', 'color': '#28a745'},  # Green
-    {'name': 'Transport', 'color': '#007bff'},  # Blue
-    {'name': 'Bills', 'color': '#dc3545'},  # Red
-    {'name': 'Entertainment', 'color': '#ffc107'},  # Yellow
-    {'name': 'Shopping', 'color': '#6f42c1'},  # Purple
-    {'name': 'Other', 'color': '#6c757d'},  # Gray
+    {'name': 'Food',          'color': '#28a745'},
+    {'name': 'Transport',     'color': '#007bff'},
+    {'name': 'Bills',         'color': '#dc3545'},
+    {'name': 'Entertainment', 'color': '#ffc107'},
+    {'name': 'Shopping',      'color': '#6f42c1'},
+    {'name': 'Other',         'color': '#6c757d'},
 ]
 
 def create_default_categories(user_id):
-    """Create default categories for a new user"""
-    categories = []
-    for cat_data in DEFAULT_CATEGORIES:
-        category = Category(
-            name=cat_data['name'],
-            user_id=user_id,
-            color=cat_data['color'],
-            is_default=True
-        )
-        categories.append(category)
-        db.session.add(category)
-    
-    db.session.commit()
+    """Bulk-insert default categories for a new user in a single round-trip."""
+    categories = [
+        Category(name=c['name'], user_id=user_id, color=c['color'], is_default=True)
+        for c in DEFAULT_CATEGORIES
+    ]
+    db.session.add_all(categories)
+    # caller is responsible for commit (auth.register flushes then commits)
     return categories
 
+def clear_dashboard_cache(user_id):
+    """Invalidate all cached dashboard API responses for this user."""
+    for suffix in ('spending_trends', 'category_breakdown', 'monthly_summary',
+                   'savings_goals_summary', 'recent_expenses', 'net_worth', 'notifications'):
+        cache.delete(f'u{user_id}_{suffix}')

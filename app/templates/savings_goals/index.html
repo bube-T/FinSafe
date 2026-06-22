@@ -41,7 +41,8 @@
 <!-- Goals Grid -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
     {% for goal in goals %}
-    <div class="soft-card p-md rounded-xl goal-card-hover {% if goal.is_completed %}border-2 border-secondary{% endif %}">
+    <div class="soft-card p-md rounded-xl goal-card-hover {% if goal.is_completed %}border-2 border-secondary{% endif %}"
+         data-goal-card="{{ goal.id }}">
         <!-- Header -->
         <div class="flex justify-between items-start mb-md">
             <div>
@@ -54,12 +55,12 @@
                 {% endif %}
             </div>
             {% if goal.is_completed %}
-            <span class="bg-secondary-container text-on-secondary-container text-[11px] font-bold px-sm py-xs rounded-full flex items-center gap-xs">
+            <span data-goal-badge class="bg-secondary-container text-on-secondary-container text-[11px] font-bold px-sm py-xs rounded-full flex items-center gap-xs">
                 <span class="material-symbols-outlined" style="font-size:14px">check_circle</span>
                 Completed!
             </span>
             {% else %}
-            <span class="bg-surface-container text-on-surface-variant text-[11px] font-bold px-sm py-xs rounded-full">
+            <span data-goal-badge class="bg-surface-container text-on-surface-variant text-[11px] font-bold px-sm py-xs rounded-full">
                 {{ "%.0f"|format(goal.progress) }}%
             </span>
             {% endif %}
@@ -68,27 +69,27 @@
         <!-- Progress -->
         <div class="mb-sm">
             <div class="flex justify-between items-end mb-xs">
-                <span class="text-[20px] font-semibold {% if goal.is_completed %}text-secondary{% else %}text-primary{% endif %}">
+                <span data-goal-current class="text-[20px] font-semibold {% if goal.is_completed %}text-secondary{% else %}text-primary{% endif %}">
                     £{{ "%.2f"|format(goal.current_amount) }}
                 </span>
                 <span class="text-[13px] text-on-surface-variant">of £{{ "%.2f"|format(goal.target_amount) }}</span>
             </div>
             <div class="h-2 bg-surface-container rounded-full overflow-hidden">
-                <div class="h-full rounded-full transition-all duration-700 {% if goal.is_completed %}bg-secondary{% else %}bg-primary{% endif %}"
+                <div data-goal-bar class="h-full rounded-full transition-all duration-700 {% if goal.is_completed %}bg-secondary{% else %}bg-primary{% endif %}"
                      style="width:{{ [goal.progress, 100] | min }}%"></div>
             </div>
         </div>
 
         {% if not goal.is_completed %}
-        <p class="text-[13px] text-on-surface-variant mb-md">£{{ "%.2f"|format(goal.remaining) }} remaining</p>
+        <p data-goal-remaining class="text-[13px] text-on-surface-variant mb-md">£{{ "%.2f"|format(goal.remaining) }} remaining</p>
         {% else %}
-        <p class="text-[13px] text-secondary mb-md font-medium">Goal reached!</p>
+        <p data-goal-remaining class="text-[13px] text-secondary mb-md font-medium">Goal reached!</p>
         {% endif %}
 
         <!-- Actions -->
         <div class="flex gap-sm flex-wrap">
             {% if not goal.is_completed %}
-            <button onclick="openProgressModal({{ goal.id }}, {{ goal.current_amount }}, {{ goal.target_amount }})"
+            <button data-update-btn onclick="openProgressModal({{ goal.id }}, {{ goal.current_amount }}, {{ goal.target_amount }})"
                     class="flex items-center gap-xs px-md py-sm bg-primary text-on-primary text-[13px] font-semibold rounded-lg active:scale-95 transition-transform">
                 <span class="material-symbols-outlined" style="font-size:16px">trending_up</span>
                 Update Progress
@@ -173,11 +174,22 @@
 
 {% block extra_js %}
 <script>
+    function showToast(msg, type) {
+        const t = document.createElement('div');
+        t.className = `fixed bottom-6 right-4 z-50 px-md py-sm rounded-xl shadow-lg text-[14px] font-medium transition-opacity
+            ${type === 'error' ? 'bg-error text-on-error' : 'bg-secondary text-on-secondary'}`;
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; }, 2500);
+        setTimeout(() => t.remove(), 2800);
+    }
+
     function openProgressModal(goalId, currentAmount, targetAmount) {
         document.getElementById('modal-goal-id').value = goalId;
         document.getElementById('modal-current-amount').value = currentAmount.toFixed(2);
         document.getElementById('modal-target').textContent = targetAmount.toFixed(2);
         document.getElementById('progress-modal').classList.remove('hidden');
+        setTimeout(() => document.getElementById('modal-current-amount').focus(), 50);
     }
 
     function closeProgressModal() {
@@ -188,17 +200,66 @@
         e.preventDefault();
         const goalId = document.getElementById('modal-goal-id').value;
         const amount = parseFloat(document.getElementById('modal-current-amount').value);
+        const submitBtn = e.target.querySelector('[type="submit"]');
+
+        // Optimistic: close modal instantly, show loading state on card
+        closeProgressModal();
+        const card = document.querySelector(`[data-goal-card="${goalId}"]`);
+        if (card) card.style.opacity = '0.6';
+        submitBtn.disabled = true;
+
         try {
-            const res = await fetch(`/savings-goals/update-progress/${goalId}`, {
-                method: 'POST',
+            const res  = await fetch(`/savings-goals/update-progress/${goalId}`, {
+                method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ current_amount: amount }),
+                body:    JSON.stringify({ current_amount: amount }),
             });
-            if (res.ok) location.reload();
-            else alert('Error updating progress. Please try again.');
-        } catch (err) {
-            alert('Error: ' + err.message);
+
+            if (!res.ok) throw new Error('Server error');
+            const goal = await res.json();
+
+            // Update the card DOM with server data — no reload needed
+            if (card) {
+                const pct = Math.min(goal.progress, 100);
+
+                // Current amount
+                const amtEl = card.querySelector('[data-goal-current]');
+                if (amtEl) amtEl.textContent = `£${goal.current_amount.toFixed(2)}`;
+
+                // Progress bar
+                const barEl = card.querySelector('[data-goal-bar]');
+                if (barEl) barEl.style.width = pct + '%';
+
+                // Percentage badge or completed badge
+                const badgeEl = card.querySelector('[data-goal-badge]');
+                if (badgeEl) {
+                    if (goal.is_completed) {
+                        badgeEl.className = 'bg-secondary-container text-on-secondary-container text-[11px] font-bold px-sm py-xs rounded-full flex items-center gap-xs';
+                        badgeEl.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px">check_circle</span>Completed!';
+                        card.classList.add('border-2', 'border-secondary');
+                        // Hide update progress button
+                        card.querySelector('[data-update-btn]')?.remove();
+                    } else {
+                        badgeEl.textContent = Math.round(goal.progress) + '%';
+                    }
+                }
+
+                // Remaining text
+                const remEl = card.querySelector('[data-goal-remaining]');
+                if (remEl) {
+                    remEl.textContent = goal.is_completed
+                        ? 'Goal reached!'
+                        : `£${goal.remaining.toFixed(2)} remaining`;
+                }
+
+                card.style.opacity = '1';
+            }
+            showToast('Progress updated!', 'success');
+        } catch {
+            if (card) card.style.opacity = '1';
+            showToast('Could not save — please try again.', 'error');
         }
+        submitBtn.disabled = false;
     });
 </script>
 {% endblock %}
